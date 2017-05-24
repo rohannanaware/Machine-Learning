@@ -1,0 +1,67 @@
+#Author : Rohan M. Nanaware
+#Date C : 12th May 2017
+#Date M : 12th May 2017
+#Purpose: Import data from NZ, create RF model | Propensity model for all customers
+
+#packages
+library(randomForest)
+library(data.table)
+
+#set working directory
+setwd("~/CPW Retention/Propensity modelling/Codes")
+
+#data import
+MS_CPWPROP_ADS <- sqlQuery(odbcChannel, "SELECT *
+                           FROM MS_CPWPROP_ADS
+                           WHERE INVOICE_DATE_FORMAT BETWEEN '2012-02-01' AND '2014-10-31'",
+                           stringsAsFactors = FALSE, believeNRows = FALSE)
+
+MS_CPWPROP_ADS <- data.table(MS_CPWPROP_ADS)
+sapply(MS_CPWPROP_ADS, function(x) length(unique(x)))
+sapply(MS_CPWPROP_ADS, function(x) sum(!is.na(x)))
+
+#NAs present in customer attribute fields - age, mos, gender, income band etc - filtered our from parent dataset
+ADS <- MS_CPWPROP_ADS[complete.cases(MS_CPWPROP_ADS),]
+
+#convert flag's data type into factors
+colnames(ADS)
+sapply(ADS, function(x) class(x))
+ADS$PART_MANUFACTURER_DESCR   <- as.factor(ADS$PART_MANUFACTURER_DESCR)
+ADS$NETWORK_PROVIDER_CODE     <- as.factor(ADS$NETWORK_PROVIDER_CODE)
+ADS$OUTLET_TYPE               <- as.factor(ADS$OUTLET_TYPE)
+ADS$SALES_DIVISION_DESCR      <- as.factor(ADS$SALES_DIVISION_DESCR)
+ADS$CHANNEL_TYPE              <- as.factor(ADS$CHANNEL_TYPE)
+ADS$SEASONAL_PURCHASE         <- as.factor(ADS$SEASONAL_PURCHASE)
+ADS$PREMIUM_HANDSET           <- as.factor(ADS$PREMIUM_HANDSET)
+ADS$PREV_PP_PURCH_FLAG        <- as.factor(ADS$PREV_PP_PURCH_FLAG)
+ADS$H_MOSAIC_UK_6_GROUP       <- as.factor(ADS$H_MOSAIC_UK_6_GROUP)
+ADS$GENDER                    <- as.factor(ADS$GENDER)
+ADS$P_PERSONAL_INCOME_BAND_V2 <- as.factor(ADS$P_PERSONAL_INCOME_BAND_V2)
+ADS$P_MARITAL_STATUS          <- as.factor(ADS$P_MARITAL_STATUS)
+ADS$CUSTOMER_NO_MARKETING_FLG <- as.factor(ADS$CUSTOMER_NO_MARKETING_FLG)
+ADS$PREV_PP_RET               <- as.factor(ADS$PREV_PP_RET)
+ADS$FLAG_2NDLINE              <- as.factor(ADS$FLAG_2NDLINE)
+ADS$PREV_2NDLINE              <- as.factor(ADS$PREV_2NDLINE)
+ADS$CUST_EMAIL_PRESENT        <- as.factor(ADS$CUST_EMAIL_PRESENT)
+ADS$FLAG_RETENTION            <- as.factor(ADS$FLAG_RETENTION)
+
+#split into test and control data
+all_customers <- data.table(SCV_INDIVIDUAL_KEY = unique(ADS$SCV_INDIVIDUAL_KEY))
+train_customers <- all_customers[1:as.integer(nrow(all_customers)*0.7),]
+#train_customers <- all_customers[1:as.integer(nrow(all_customers)*0.1),]
+test_customers  <- all_customers[(as.integer(nrow(all_customers)*0.7)+1):nrow(all_customers),]
+train_data <- ADS[train_customers, on = 'SCV_INDIVIDUAL_KEY']
+test_data  <- ADS[test_customers, on = 'SCV_INDIVIDUAL_KEY']
+
+#removing unrequired fields from the train data
+cols = c("SCV_INDIVIDUAL_KEY","TRANSACTION_NUMBER","ORDER_LINE_NUMBER","INVOICE_DATE_FORMAT",
+         "FLAG_2NDLINE","ADDRESSID")
+train_data <- train_data[, !cols, with = FALSE]
+
+randomForest_v1 <- randomForest(FLAG_RETENTION~., data = train_data, importance = TRUE)
+
+#reference codes
+
+#filter first x& rows from a dataset
+temp <- iris
+temp <- temp[1:as.integer(nrow(temp)*0.7),]
