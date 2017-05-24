@@ -1,0 +1,182 @@
+#Author : Rohan M. Nanaware
+#Date C : 12th May 2017
+#Date M : 12th May 2017
+#Purpose: CPW Customer propensity model using XGBoost - VIPs, PDPs
+
+install.packages('xgboost', dependencies = T)
+install.packages('readr', dependencies = T)
+
+library(xgboost)
+library(readr)
+library(stringr)
+library(caret)
+library(car)
+
+#data import
+MS_CPWPROP_ADS <- sqlQuery(odbcChannel, "SELECT *
+                           FROM MS_CPWPROP_ADS
+                           WHERE INVOICE_DATE_FORMAT BETWEEN '2012-02-01' AND '2014-10-31'",
+                           stringsAsFactors = FALSE, believeNRows = FALSE)
+MS_CPWPROP_ADS <- data.table(MS_CPWPROP_ADS)
+
+#NAs present in customer attribute fields - age, mos, gender, income band etc - filtered our from parent dataset
+ADS <- MS_CPWPROP_ADS[complete.cases(MS_CPWPROP_ADS),]
+ADS <- ADS[ADS$INVOICE_DATE_FORMAT >= "2013-07-01" & ADS$INVOICE_DATE_FORMAT < "2014-01-01"]
+
+#one hot encoding
+#check the datatypes and levels of each variable
+View(data.frame(
+  unique_ = sapply(ADS, function(x) length(unique(x))),
+  class_  = sapply(ADS, function(x) class(x))
+))
+#reduce number of levels
+ADS$PART_MANUFACTURER_DESCR <- ifelse(ADS$PART_MANUFACTURER_DESCR %in% c('APPLE','Samsung','Nokia','Blackberry',
+                                                                         'HTC','Sony'),
+                                      ADS$PART_MANUFACTURER_DESCR,
+                                      'Others')
+ADS$NETWORK_PROVIDER_NAME   <- ifelse(ADS$NETWORK_PROVIDER_NAME %in% c('O2','Vodafone','Orange','Talkmobile',
+                                                                       'T-Mobile','EE'),
+                                      ADS$NETWORK_PROVIDER_NAME,
+                                      'Others')
+ADS$OUTLET_TYPE             <- ifelse(ADS$OUTLET_TYPE %in% c('High Street','Shopping Centre','Warehouse - Online',
+                                                             'Retail Park','Warehouse - Other','Arterial Route',
+                                                             'Regional Shopping Centre'),
+                                      ADS$OUTLET_TYPE,
+                                      'Others')
+ADS$SALES_DIVISION_DESCR    <- ifelse(ADS$SALES_DIVISION_DESCR %in% c('Non-retail & Support','North Division',
+                                                                      'South Division', 'Central Division', 'East Division',
+                                                                      'London Division', 'Not Open', 'Samsung Division'),
+                                      ADS$SALES_DIVISION_DESCR,
+                                      'Others')
+ADS$PREV_PP_PURCH           <- ifelse(ADS$PREV_PP_PURCH %in% c(0,1,2,3),
+                                      ADS$PREV_PP_PURCH,
+                                      '3+')
+
+#filter out unrequired fieds
+cols = c("SCV_INDIVIDUAL_KEY","TRANSACTION_NUMBER","ORDER_LINE_NUMBER","INVOICE_DATE_FORMAT",
+         "FLAG_2NDLINE","ADDRESSID")
+ADS <- ADS[, !cols, with = FALSE]
+ohe_ft <- c('PART_MANUFACTURER_DESCR','NETWORK_PROVIDER_NAME','OUTLET_TYPE', 'SALES_DIVISION_DESCR', 'CHANNEL_TYPE',
+            'PREV_PP_PURCH','H_MOSAIC_UK_6_GROUP','GENDER', 'P_PERSONAL_INCOME_BAND_V2','P_MARITAL_STATUS','CUSTOMER_NO_MARKETING_FLG',
+            'P_AFFLUENCE_V2','P_FINANCIAL_STRESS','H_FAMILY_LIFESTAGE_2011','H_NUMBER_OF_BEDROOMS','H_RESIDENCE_TYPE_V2', 'H_TENURE_V2')
+dummies <- dummyVars(~ PART_MANUFACTURER_DESCR+ NETWORK_PROVIDER_NAME+OUTLET_TYPE+SALES_DIVISION_DESCR+CHANNEL_TYPE+
+                       PREV_PP_PURCH+H_MOSAIC_UK_6_GROUP+GENDER+ P_PERSONAL_INCOME_BAND_V2+P_MARITAL_STATUS+CUSTOMER_NO_MARKETING_FLG+
+                       P_AFFLUENCE_V2+P_FINANCIAL_STRESS+H_FAMILY_LIFESTAGE_2011+H_NUMBER_OF_BEDROOMS+H_RESIDENCE_TYPE_V2+ H_TENURE_V2,
+                     data = ADS)
+ADS_ohe <- as.data.frame(predict(dummies, newdata = ADS))
+ADS <- data.frame(ADS)
+ADS_combined <- cbind(ADS[,-c(which(colnames(ADS) %in% ohe_ft))], ADS_ohe)
+
+rm(ADS, ADS_ohe)
+gc()
+#split into test and control data
+train_data <- ADS_combined[1:as.integer(nrow(ADS_combined)*0.7),]
+#train_data <- ADS_combined
+#train_data <- ADS_combined[1:as.integer(nrow(ADS_combined)*0.1),]
+test_data  <- ADS_combined[(as.integer(nrow(ADS_combined)*0.7)+1):nrow(ADS_combined),]
+#split the dependent and feature variables
+train_data_dep <- train_data['FLAG_RETENTION']
+train_data_ft <- train_data[-grep('FLAG_RETENTION', colnames(train_data))]
+train_data_ft[] <- lapply(train_data_ft, as.numeric)
+test_data_dep <- test_data['FLAG_RETENTION']
+test_data_ft <- test_data[-grep('FLAG_RETENTION', colnames(test_data))]
+test_data_ft[] <- lapply(test_data_ft, as.numeric)
+
+#XGBoost algorithm
+set.seed(1007)
+xgb_70pc_v1 <- xgboost(data = data.matrix(train_data_ft), 
+                       label = train_data_dep$FLAG_RETENTION, 
+                       eta = 0.3,
+                       max_depth = 10,
+                       nround=500, 
+                       seed = 1007,
+                       objective = "binary:logistic", #### binary:logistic for classification
+                       # booster = "gblinear",
+                       nthread = 3
+                       # ,verbose = F
+)
+
+#y_pred <- predict(xgb_70pc_v1, data.matrix(train_data_ft[,-1]))
+#train_data_dep
+
+#XGBoost algorithm : iteration 2
+set.seed(1008)
+xgb_10pc_v1 <- xgboost(data = data.matrix(train_data_ft[,-1]), 
+                       label = train_data_dep$FLAG_RETENTION, 
+                       eta = 0.3,
+                       max_depth = 10,
+                       nround=100, 
+                       seed = 1008,
+                       objective = "binary:logistic", #### binary:logistic for classification
+                       # booster = "gblinear",
+                       nthread = 3
+                       # ,verbose = F
+)
+
+#XGBoost algorithm : iteration 3
+set.seed(1009)
+xgb_70pc_v1 <- xgboost(data = data.matrix(train_data_ft), 
+                       label = train_data_dep$FLAG_RETENTION, 
+                       eta = 0.3,
+                       max_depth = 10,
+                       nround=100, 
+                       seed = 1009,
+                       objective = "binary:logistic", #### binary:logistic for classification
+                       # booster = "gblinear",
+                       nthread = 3
+                       # ,verbose = F
+)
+
+#XGBoost algorithm : iteration 4
+set.seed(1010)
+xgb_70pc_v2 <- xgboost(data = data.matrix(train_data_ft), 
+                       label = train_data_dep$FLAG_RETENTION, 
+                       eta = 0.3,
+                       max_depth = 10,
+                       nround=300, 
+                       seed = 1010,
+                       objective = "binary:logistic", #### binary:logistic for classification
+                       # booster = "gblinear",
+                       nthread = 3
+                       # ,verbose = F
+)
+
+#XGBoost algorithm : iteration 5
+set.seed(1011)
+xgb_70pc_v3 <- xgboost(data = data.matrix(train_data_ft), 
+                       label = train_data_dep$FLAG_RETENTION, 
+                       eta = 0.1,
+                       max_depth = 10,
+                       nround=300, 
+                       seed = 1011,
+                       objective = "binary:logistic", #### binary:logistic for classification
+                       # booster = "gblinear",
+                       nthread = 3
+                       # ,verbose = F
+)
+
+#get feature real names
+names <- dimnames(data.matrix(train_data_ft))[[2]]
+#compute feature importance matrix
+importance_matrix <- xgb.importance(names, model = xgb_70pc_v1)
+xgb.plot.importance(importance_matrix[1:20,])
+
+pred <- predict(xgb_70pc_v3, data.matrix(train_data_ft))
+prediction <- as.data.frame(as.numeric(pred > 0.5))
+err <- mean(as.numeric(pred > 0.5) != train_data_dep$FLAG_RETENTION)
+print(paste("test-error=", err))
+
+# With SMOTE()
+confusionMatrix(prediction$`as.numeric(pred > 0.5)`,train_data_dep$FLAG_RETENTION)
+
+
+pred <- predict(xgb_10pc_v1, data.matrix(test_data_ft))
+prediction <- as.data.frame(as.numeric(pred > 0.5))
+err <- mean(as.numeric(pred > 0.5) != test_data_dep$FLAG_RETENTION)
+print(paste("test-error=", err))
+
+# With SMOTE()
+confusionMatrix(prediction$`as.numeric(pred > 0.5)`,test_data_dep$FLAG_RETENTION)
+
+
+View(head(train_data))
