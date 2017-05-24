@@ -1,0 +1,80 @@
+ADS <- MS_CPWPROP_ADS[complete.cases(MS_CPWPROP_ADS),]
+ADS <- ADS[ADS$INVOICE_DATE_FORMAT >= "2014-01-01" & ADS$INVOICE_DATE_FORMAT < "2014-04-01"]
+ADS <- ADS[ADS$INVOICE_DATE_FORMAT >= "2014-07-01" & ADS$INVOICE_DATE_FORMAT < "2014-10-01"]
+
+temp <- ADS$SCV_INDIVIDUAL_KEY[1:1000]
+ADS <- ADS[1:10000,]
+
+
+
+#one hot encoding
+#check the datatypes and levels of each variable
+View(data.frame(
+  unique_ = sapply(ADS, function(x) length(unique(x))),
+  class_  = sapply(ADS, function(x) class(x))
+))
+#reduce number of levels
+ADS$PART_MANUFACTURER_DESCR <- ifelse(ADS$PART_MANUFACTURER_DESCR %in% c('APPLE','Samsung','Nokia','Blackberry',
+                                                                         'HTC','Sony'),
+                                      ADS$PART_MANUFACTURER_DESCR,
+                                      'Others')
+ADS$NETWORK_PROVIDER_NAME   <- ifelse(ADS$NETWORK_PROVIDER_NAME %in% c('O2','Vodafone','Orange','Talkmobile',
+                                                                       'T-Mobile','EE'),
+                                      ADS$NETWORK_PROVIDER_NAME,
+                                      'Others')
+ADS$OUTLET_TYPE             <- ifelse(ADS$OUTLET_TYPE %in% c('High Street','Shopping Centre','Warehouse - Online',
+                                                             'Retail Park','Warehouse - Other','Arterial Route',
+                                                             'Regional Shopping Centre'),
+                                      ADS$OUTLET_TYPE,
+                                      'Others')
+ADS$SALES_DIVISION_DESCR    <- ifelse(ADS$SALES_DIVISION_DESCR %in% c('Non-retail & Support','North Division',
+                                                                      'South Division', 'Central Division', 'East Division',
+                                                                      'London Division', 'Not Open', 'Samsung Division'),
+                                      ADS$SALES_DIVISION_DESCR,
+                                      'Others')
+ADS$PREV_PP_PURCH           <- ifelse(ADS$PREV_PP_PURCH %in% c(0,1,2,3),
+                                      ADS$PREV_PP_PURCH,
+                                      '3+')
+#filter out unrequired fieds
+cols = c("SCV_INDIVIDUAL_KEY","TRANSACTION_NUMBER","ORDER_LINE_NUMBER","INVOICE_DATE_FORMAT",
+         "FLAG_2NDLINE","ADDRESSID")
+ADS <- ADS[, !cols, with = FALSE]
+ohe_ft <- c('PART_MANUFACTURER_DESCR','NETWORK_PROVIDER_NAME','OUTLET_TYPE', 'SALES_DIVISION_DESCR', 'CHANNEL_TYPE',
+            'PREV_PP_PURCH','H_MOSAIC_UK_6_GROUP','GENDER', 'P_PERSONAL_INCOME_BAND_V2','P_MARITAL_STATUS','CUSTOMER_NO_MARKETING_FLG',
+            'P_AFFLUENCE_V2','P_FINANCIAL_STRESS','H_FAMILY_LIFESTAGE_2011','H_NUMBER_OF_BEDROOMS','H_RESIDENCE_TYPE_V2', 'H_TENURE_V2')
+dummies <- dummyVars(~ PART_MANUFACTURER_DESCR+ NETWORK_PROVIDER_NAME+OUTLET_TYPE+SALES_DIVISION_DESCR+CHANNEL_TYPE+
+                       PREV_PP_PURCH+H_MOSAIC_UK_6_GROUP+GENDER+ P_PERSONAL_INCOME_BAND_V2+P_MARITAL_STATUS+CUSTOMER_NO_MARKETING_FLG+
+                       P_AFFLUENCE_V2+P_FINANCIAL_STRESS+H_FAMILY_LIFESTAGE_2011+H_NUMBER_OF_BEDROOMS+H_RESIDENCE_TYPE_V2+ H_TENURE_V2,
+                     data = ADS)
+ADS_ohe <- as.data.frame(predict(dummies, newdata = ADS))
+ADS <- data.frame(ADS)
+ADS_combined <- cbind(ADS[,-c(which(colnames(ADS) %in% ohe_ft))], ADS_ohe)
+
+#split into test and control data
+test_data <- ADS_combined
+test_data_dep <- test_data['FLAG_RETENTION']
+test_data_ft <- test_data[-grep('FLAG_RETENTION', colnames(test_data))]
+test_data_ft[] <- lapply(test_data_ft, as.numeric)
+
+#accuracy for train data
+pred <- predict(xgb_70pc_v3, data.matrix(train_data_ft))
+prediction <- as.data.frame(as.numeric(pred > 0.5))
+err <- mean(as.numeric(pred > 0.5) != train_data_dep$FLAG_RETENTION)
+print(paste("test-error=", err))
+
+confusionMatrix(prediction$`as.numeric(pred > 0.5)`,train_data_dep$FLAG_RETENTION)
+
+#accuracy for test data
+pred <- predict(xgb_70pc_v3, data.matrix(test_data_ft))
+prediction <- as.data.frame(as.numeric(pred > 0.5))
+err <- mean(as.numeric(pred > 0.5) != test_data_dep$FLAG_RETENTION)
+
+View(head(pred))
+print(paste("test-error=", err))
+confusionMatrix(prediction$`as.numeric(pred > 0.5)`,test_data_dep$FLAG_RETENTION)
+
+View(head(prediction))
+
+temp2 <- cbind(temp, ADS, prediction)
+temp3 <- cbind(temp2$temp, temp2$FLAG_RETENTION, temp2$`as.numeric(pred > 0.5)`)
+
