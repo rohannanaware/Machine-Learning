@@ -1,0 +1,215 @@
+#Author : Rohan M. Nanaware
+#Date C : 21st Jun 2017
+#Date M : 21st Jun 2017 - Chi-square, PCA
+#         22nd Jun 2017 - MCA, Significance testing
+#Purpose: CPW Customer propensity model - 1st iteration
+#Excel  : 0621_prpmodel_iteration_1
+
+#  Details: 
+#  1. 1st iteration to be run for O2 customers only
+#  2. Factors analysis - Reduce the number of factors using the results from Bivariates 2.a
+#                      - Classify vars into cat, numeric, one-hot
+#                      - Univariates, outlier deletion, Multivariate outlier deletion 2.b
+#                      - Correlation matrix for dimensionality reduction, MCA, Chi-square test 2.c - Documemnt
+#                      - Latent factor detection
+#  3. Data checks      - ANOVA, Hoslem test
+#  4. Post 1st itr.    - Remove insignificant variables
+#                      - Sensitivity vs Specificity graphs and AUC
+#                      - Model validation - In sample, out of sample, k-fold, AUC
+
+library(data.table)
+library(MASS)
+library(caret)
+library(FactoMineR)
+library(ggplot2)
+#Setup ODBC - 
+library(RODBC)
+#Normalize the environment
+Sys.setenv(ODBCINI="/etc/odbc.ini")
+Sys.setenv(NZ_ODBC_INI_PATH="/etc")
+
+#Create ODBC connection
+odbcChannel <-odbcConnect("NZSQL1")
+odbcClose(odbcChannel)
+
+#Pull data from Netezza
+MS_CPWPROP_ADS <- sqlQuery(odbcChannel, "SELECT *
+                           FROM BASE_CPW_PM_ADS
+                           WHERE INVOICE_DATE_FORMAT BETWEEN '2012-02-01' AND '2014-10-31'
+                           AND NETWORK_PROVIDER_NAME = 'O2'",
+                           stringsAsFactors = FALSE, believeNRows = FALSE)
+save(MS_CPWPROP_ADS, file = "MS_CPWPROP_ADS.RData")
+
+#Operations on fields - level reduction
+MS_CPWPROP_ADS$DAY_DIFF_2ND_LINE_PURCH[is.na(MS_CPWPROP_ADS$DAY_DIFF_2ND_LINE_PURCH)] <- 0#2nd line purchase diff
+MS_CPWPROP_ADS$PART_MANUFACTURER_DESCR <- ifelse(MS_CPWPROP_ADS$PART_MANUFACTURER_DESCR %in% c('APPLE','Samsung','Nokia','Blackberry',
+                                                                                    'HTC','Sony'),
+                                                 MS_CPWPROP_ADS$PART_MANUFACTURER_DESCR,
+                                                 'Others')
+MS_CPWPROP_ADS$NETWORK_PROVIDER_NAME   <- ifelse(MS_CPWPROP_ADS$NETWORK_PROVIDER_NAME %in% c('O2','Vodafone','Orange','Talkmobile',
+                                                                       'T-Mobile','EE'),
+                                                 MS_CPWPROP_ADS$NETWORK_PROVIDER_NAME,
+                                                 'Others')
+MS_CPWPROP_ADS$OUTLET_TYPE             <- ifelse(MS_CPWPROP_ADS$OUTLET_TYPE %in% c('High Street','Shopping Centre','Warehouse - Online',
+                                                             'Retail Park','Warehouse - Other','Arterial Route',
+                                                             'Regional Shopping Centre'),
+                                                 MS_CPWPROP_ADS$OUTLET_TYPE,
+                                                 'Others')
+MS_CPWPROP_ADS$SALES_DIVISION_DESCR    <- ifelse(MS_CPWPROP_ADS$SALES_DIVISION_DESCR %in% c('Non-retail & Support','North Division',
+                                                                      'South Division', 'Central Division', 'East Division',
+                                                                      'London Division', 'Not Open', 'Samsung Division'),
+                                                 MS_CPWPROP_ADS$SALES_DIVISION_DESCR,
+                                                'Others')
+MS_CPWPROP_ADS$CHANNEL_TYPE            <- ifelse(MS_CPWPROP_ADS$CHANNEL_TYPE %in% c('Retail Branches'),
+                                                 "CPW-STORE",
+                                                 ifelse(MS_CPWPROP_ADS$CHANNEL_TYPE %in% c('On Line Mobiles.co.uk', 'On Line E2_OSPS Vanilla'),
+                                                        "OLS",
+                                                        ifelse(MS_CPWPROP_ADS$CHANNEL_TYPE %in% c('On Line Direct','On Line Web'),
+                                                               "CPW-OL",
+                                                               'Others')))
+MS_CPWPROP_ADS$P_AGE_FINE
+MS_CPWPROP_ADS$P_PERSONAL_INCOME_BAND_V2
+MS_CPWPROP_ADS$H_NUMBER_OF_ADULTS
+MS_CPWPROP_ADS$P_AFFLUENCE_V2
+MS_CPWPROP_ADS$P_FINANCIAL_STRESS
+MS_CPWPROP_ADS$H_NUMBER_OF_BEDROOMS
+MS_CPWPROP_ADS$H_RESIDENCE_TYPE_V2
+MS_CPWPROP_ADS$H_TENURE_V2
+colnames(MS_CPWPROP_ADS)[48] <- 'PREPAY_PAST_MIGRATION_FLAG'
+
+#Filter for O2 customers
+MS_CPWPROP_ADS_O2 <- MS_CPWPROP_ADS[MS_CPWPROP_ADS$NETWORK_PROVIDER_NAME == 'O2',]
+
+#Filter out data for out of time validation
+MS_CPWPROP_ADS_O2_INTIME <- MS_CPWPROP_ADS_O2[MS_CPWPROP_ADS_O2$INVOICE_DATE_FORMAT <= '2014-07-31',]
+
+#Work on sample, park data for out of time validation
+sample_size = 1000000
+set.seed(1007)
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE <- MS_CPWPROP_ADS_O2_INTIME[sample(1:nrow(MS_CPWPROP_ADS_O2_INTIME), size = sample_size, replace = FALSE, prob = NULL),]
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE <- data.table(MS_CPWPROP_ADS_O2_INTIME_SAMPLE)
+
+#2.a - Reduce the number of factors using the results from Bivariates
+REDUCE_BIVAR <- c('PREMIUM_HANDSET',
+                  'PAST_RETENTION',
+                  'PREV_PP_PURCH',
+                  'OTHER_CONNECTION_COUNT_HIST',
+                  'PAST_UPGRADE_COUNT',
+                  'PERCENT_SEASONAL_TXNS',
+                  'OTHER_CONNECTION_COUNT',
+                  'SIMO_PAST_MIGRATION_COUNT',
+                  'PREPAY_PAST_MIGRATION_COUNT',
+                  'SIMO_PURCH_INLIFE_WIN_COUNT',
+                  'PREPAY_PURCH_INLIFE_WIN_COUNT'
+)
+#rm(MS_CPWPROP_ADS_O2, MS_CPWPROP_ADS_O2_INTIME)
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE[, !REDUCE_BIVAR, with = FALSE]
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE$NETWORK_PROVIDER_NAME <- NULL
+#filter out IDs
+REDUCE_IDs        <- c('SCV_INDIVIDUAL_KEY',
+                       'TRANSACTION_NUMBER',
+                       'ORDER_LINE_NUMBER',
+                       'INVOICE_DATE_FORMAT',
+                       'ADDRESSID')
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE[, !REDUCE_IDs, with = FALSE]
+#2.b Univariates, outlier deletion, Multivariate outlier deletion, NA removal
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE[complete.cases(MS_CPWPROP_ADS_O2_INTIME_SAMPLE),]
+
+#2.c Correlation matrix for dimensionality reduction, MCA, chi-square test
+#    Chi-square test for dependency check
+chi_sq_matrix <- data.frame(matrix(data = NA, nrow = ncol(MS_CPWPROP_ADS_O2_INTIME_SAMPLE), ncol = ncol(MS_CPWPROP_ADS_O2_INTIME_SAMPLE)))
+colnames(chi_sq_matrix) <- colnames(MS_CPWPROP_ADS_O2_INTIME_SAMPLE)
+rownames(chi_sq_matrix) <- colnames(MS_CPWPROP_ADS_O2_INTIME_SAMPLE)
+for (i in 1:ncol(MS_CPWPROP_ADS_O2_INTIME_SAMPLE)) {
+  for (j in 1:ncol(MS_CPWPROP_ADS_O2_INTIME_SAMPLE)){
+    tb         <- table(MS_CPWPROP_ADS_O2_INTIME_SAMPLE[[i]], MS_CPWPROP_ADS_O2_INTIME_SAMPLE[[j]])
+    chi_sq_obj <- chisq.test(tb)
+    chi_sq_matrix[i, j] <-  chi_sq_obj$p.value
+    print(paste("row[",i,"] col[",j,"]", sep = ""))
+  }
+}
+#results - high correlation amongst all variables
+
+#Principal component analysis
+#https://www.analyticsvidhya.com/blog/2016/03/practical-guide-principal-component-analysis-python/
+#Store the dependent variable - 
+FLAG_RETENTION <- data.frame(FLAG_RETENTION = MS_CPWPROP_ADS_O2_INTIME_SAMPLE$FLAG_RETENTION)
+REDUCE_DEP = c("FLAG_RETENTION")
+#Filter out the dependent variable
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE[, !REDUCE_DEP, with = FALSE]
+
+#One hot encoding on all categorical variables
+str(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP)
+FEATURE_OHE <- c('PART_MANUFACTURER_DESCR',
+                 'OUTLET_TYPE',
+                 'SALES_DIVISION_DESCR',
+                 'CHANNEL_TYPE',
+                 'P_AGE_FINE',
+                 'H_MOSAIC_UK_6_GROUP',
+                 'GENDER',
+                 'P_PERSONAL_INCOME_BAND_V2',
+                 'P_MARITAL_STATUS',
+                 'CUSTOMER_NO_MARKETING_FLG',
+                 'P_AFFLUENCE_V2',
+                 'P_FINANCIAL_STRESS',
+                 'H_FAMILY_LIFESTAGE_2011',
+                 'H_NUMBER_OF_BEDROOMS',
+                 'H_RESIDENCE_TYPE_V2',
+                 'H_TENURE_V2'
+                 )
+DUMMIES <- dummyVars(~ PART_MANUFACTURER_DESCR + 
+                       OUTLET_TYPE + 
+                       SALES_DIVISION_DESCR +
+                       CHANNEL_TYPE +
+                       P_AGE_FINE +
+                       H_MOSAIC_UK_6_GROUP +
+                       GENDER +
+                       P_PERSONAL_INCOME_BAND_V2 +
+                       P_MARITAL_STATUS +
+                       CUSTOMER_NO_MARKETING_FLG +
+                       P_AFFLUENCE_V2 +
+                       P_FINANCIAL_STRESS +
+                       H_FAMILY_LIFESTAGE_2011 +
+                       H_NUMBER_OF_BEDROOMS +
+                       H_RESIDENCE_TYPE_V2 +
+                       H_TENURE_V2,
+                     data = MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP)
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP_ohe <- as.data.frame(predict(DUMMIES, newdata = MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP))
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP     <- data.frame(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP)
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP_ENC <- 
+  cbind(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP[,-c(which(colnames(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP) %in% FEATURE_OHE))]
+        , MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP_ohe)
+#encoding ends here
+
+#Divide the data into train and test
+TRAIN_SIZE <- 0.7
+PCA.TRAIN <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP_ENC[1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP_ENC)),]
+PCA.TEST <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP_ENC[-(1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_PRINCOMP_ENC))),]
+
+#Principal component analysis
+PR_COMP <- prcomp(PCA.TRAIN, scale. = T)
+names(PR_COMP)
+PR_COMP$rotation[1:5,1:5]#First 5 principal components
+
+#Compute the standard deviation
+ST_DEV <- PR_COMP$sdev
+PR_VAR <- ST_DEV^2
+PROPORTION_VAR <- PR_VAR/sum(PR_VAR)
+plot(PROPORTION_VAR,
+     xlab = "PRINCIPAL COMPONENT",
+     ylab = "PROPORTION OF VARIANCE EXPLAINED",
+     type = "b")
+plot(cumsum(PROPORTION_VAR),
+     xlab = "PRINCIPAL COMPONENT",
+     ylab = "PROPORTION OF VARIANCE EXPLAINED",
+     type = "b")
+View(data.frame(PROPORTION_VAR))
+
+#22nd Jun 2017
+
+#MCA
+
+#Convert categorical fields to factors
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_MCA <- sapply(MS_CPWPROP_ADS_O2_INTIME_SAMPLE, function(x) as.factor(x))
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_MCA <- as.data.frame(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_MCA)
+str(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_MCA)
