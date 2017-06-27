@@ -213,3 +213,164 @@ View(data.frame(PROPORTION_VAR))
 MS_CPWPROP_ADS_O2_INTIME_SAMPLE_MCA <- sapply(MS_CPWPROP_ADS_O2_INTIME_SAMPLE, function(x) as.factor(x))
 MS_CPWPROP_ADS_O2_INTIME_SAMPLE_MCA <- as.data.frame(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_MCA)
 str(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_MCA)
+
+#Tree based significance testing
+#Store the dependent variable - 
+FLAG_RETENTION <- data.frame(FLAG_RETENTION = MS_CPWPROP_ADS_O2_INTIME_SAMPLE$FLAG_RETENTION)
+REDUCE_DEP = c("FLAG_RETENTION")
+#Filter out the dependent variable
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE[, !REDUCE_DEP, with = FALSE]
+
+#One hot encoding on all categorical variables
+str(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB)
+FEATURE_OHE <- c('PART_MANUFACTURER_DESCR',
+                 'OUTLET_TYPE',
+                 'SALES_DIVISION_DESCR',
+                 'CHANNEL_TYPE',
+                 'P_AGE_FINE',
+                 'H_MOSAIC_UK_6_GROUP',
+                 'GENDER',
+                 'P_PERSONAL_INCOME_BAND_V2',
+                 'P_MARITAL_STATUS',
+                 'CUSTOMER_NO_MARKETING_FLG',
+                 'P_AFFLUENCE_V2',
+                 'P_FINANCIAL_STRESS',
+                 'H_FAMILY_LIFESTAGE_2011',
+                 'H_NUMBER_OF_BEDROOMS',
+                 'H_RESIDENCE_TYPE_V2',
+                 'H_TENURE_V2'
+)
+DUMMIES <- dummyVars(~ PART_MANUFACTURER_DESCR + 
+                       OUTLET_TYPE + 
+                       SALES_DIVISION_DESCR +
+                       CHANNEL_TYPE +
+                       P_AGE_FINE +
+                       H_MOSAIC_UK_6_GROUP +
+                       GENDER +
+                       P_PERSONAL_INCOME_BAND_V2 +
+                       P_MARITAL_STATUS +
+                       CUSTOMER_NO_MARKETING_FLG +
+                       P_AFFLUENCE_V2 +
+                       P_FINANCIAL_STRESS +
+                       H_FAMILY_LIFESTAGE_2011 +
+                       H_NUMBER_OF_BEDROOMS +
+                       H_RESIDENCE_TYPE_V2 +
+                       H_TENURE_V2,
+                     data = MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB)
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_OHE <- as.data.frame(predict(DUMMIES, newdata = MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB))
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB     <- data.frame(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB)
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC <- 
+  cbind(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB[,-c(which(colnames(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB) %in% FEATURE_OHE))]
+        , MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_OHE)
+#encoding ends here
+
+#Divide the data into train and test
+TRAIN_SIZE <- 0.7
+XGB.TRAIN <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC[1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC)),]
+XGB.TEST  <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC[-(1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC))),]
+DEP.TRAIN <- data.frame(FLAG_RETENTION = FLAG_RETENTION[1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC)),])
+DEP.TEST  <- data.frame(FLAG_RETENTION = FLAG_RETENTION[-(1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC))),])
+
+View(head(MS_CPWPROP_ADS_O2_INTIME_SAMPLE, 100))
+View(head(DEP.TRAIN, 100))
+
+#Convert fields into numeric
+XGB.TRAIN[] <- lapply(XGB.TRAIN, as.numeric)
+#XGboost - 1st iteration
+#XGBoost algorithm :
+set.seed(1007)
+XGB_1 <- xgboost(data = data.matrix(XGB.TRAIN), 
+                  label = DEP.TRAIN$FLAG_RETENTION, 
+                  eta = 0.3,
+                  max_depth = 10,
+                  nround=100, 
+                  seed = 1007,
+                  objective = "binary:logistic", #### binary:logistic for classification
+                  # booster = "gblinear",
+                  nthread = 3
+                  # ,verbose = F
+)
+
+#get feature real names
+NAMES <- dimnames(data.matrix(XGB.TRAIN))[[2]]
+#compute feature importance matrix
+importance_matrix <- xgb.importance(NAMES, model = XGB_1)
+xgb.plot.importance(importance_matrix[1:20,])
+
+pred <- predict(XGB_1, data.matrix(XGB.TRAIN))
+prediction <- as.data.frame(as.numeric(pred > 0.5))
+err <- mean(as.numeric(pred > 0.5) != DEP.TRAIN$FLAG_RETENTION)
+print(paste("test-error=", err))#71%
+confusionMatrix(prediction$`as.numeric(pred > 0.5)`,DEP.TRAIN$FLAG_RETENTION)
+
+#In time validation
+pred <- predict(XGB_1, data.matrix(XGB.TEST))
+prediction <- as.data.frame(as.numeric(pred > 0.5))
+err <- mean(as.numeric(pred > 0.5) != DEP.TEST$FLAG_RETENTION)
+print(paste("test-error=", err))#63%
+confusionMatrix(prediction$`as.numeric(pred > 0.5)`,DEP.TEST$FLAG_RETENTION)
+
+#Re run model on significant factos - ITERATION 1 - SIGNIFICANT VARS. ONLY - TEST DATASET - INTIME VALIDATION
+importance_matrix$Gain_cumsum <- cumsum(importance_matrix$Gain)
+KEEP_INSIG <- importance_matrix$Feature[importance_matrix$Gain_cumsum <= 0.9]
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC <- data.table(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC)
+MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC[, KEEP_INSIG, with = FALSE]
+#Divide the data into train and test
+TRAIN_SIZE <- 0.7
+XGB.TRAIN <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC[1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC)),]
+XGB.TEST  <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC[-(1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC))),]
+DEP.TRAIN <- data.frame(FLAG_RETENTION = FLAG_RETENTION[1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC)),])
+DEP.TEST  <- data.frame(FLAG_RETENTION = FLAG_RETENTION[-(1:as.integer(TRAIN_SIZE*nrow(MS_CPWPROP_ADS_O2_INTIME_SAMPLE_XGB_ENC))),])
+
+View(head(MS_CPWPROP_ADS_O2_INTIME_SAMPLE, 100))
+View(head(DEP.TRAIN, 100))
+
+#Convert fields into numeric
+XGB.TRAIN[] <- lapply(XGB.TRAIN, as.numeric)
+#XGboost - 1st iteration
+#XGBoost algorithm :
+set.seed(1007)
+XGB_2 <- xgboost(data = data.matrix(XGB.TRAIN), 
+                 label = DEP.TRAIN$FLAG_RETENTION, 
+                 eta = 0.3,
+                 max_depth = 10,
+                 nround=100, 
+                 seed = 1007,
+                 objective = "binary:logistic", #### binary:logistic for classification
+                 # booster = "gblinear",
+                 nthread = 3
+                 # ,verbose = F
+)
+
+#get feature real names
+NAMES <- dimnames(data.matrix(XGB.TRAIN))[[2]]
+#compute feature importance matrix
+importance_matrix <- xgb.importance(NAMES, model = XGB_2)
+xgb.plot.importance(importance_matrix[1:20,])
+
+pred <- predict(XGB_2, data.matrix(XGB.TRAIN))
+prediction <- as.data.frame(as.numeric(pred > 0.5))
+err <- mean(as.numeric(pred > 0.5) != DEP.TRAIN$FLAG_RETENTION)
+print(paste("test-error=", err))#71%
+confusionMatrix(prediction$`as.numeric(pred > 0.5)`,DEP.TRAIN$FLAG_RETENTION)
+
+#In time validation
+pred <- predict(XGB_2, data.matrix(XGB.TEST))
+prediction <- as.data.frame(as.numeric(pred > 0.5))
+err <- mean(as.numeric(pred > 0.5) != DEP.TEST$FLAG_RETENTION)
+print(paste("test-error=", err))#63%
+confusionMatrix(prediction$`as.numeric(pred > 0.5)`,DEP.TEST$FLAG_RETENTION)
+
+#Sensitivity vs specificity
+library(ROCR)
+pred <- data.frame(pred)
+colnames(pred)
+pred <- prediction(pred$pred, DEP.TRAIN$FLAG_RETENTION)
+ss <- performance(pred, "sens", "spec")
+plot(ss)
+ss@alpha.values[[1]][which.max(ss@x.values[[1]]+ss@y.values[[1]])]
+  
+#More validations in "0621_prpmodel_iteration_1_validations"
+#Factor analysis - PCA vs FA bring it on!!!
+
+
