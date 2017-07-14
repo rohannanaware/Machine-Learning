@@ -383,7 +383,7 @@
   plot(ss)
   ss@alpha.values[[1]][which.max(ss@x.values[[1]]+ss@y.values[[1]])]
   
-}# 08. Modelli ng technique - XBGoost
+}# 08. Modelling technique - XBGoost
 {
   #Lift /gain chart
   pred <- predict(XGB_2, data.matrix(XGB.TEST))
@@ -803,7 +803,7 @@
         MS_CPWPROP_ADS_O2_OUTIME <- MS_CPWPROP_ADS_O2[MS_CPWPROP_ADS_O2$INVOICE_DATE_FORMAT > '2014-07-31',]
         #Work on sample, park data for out of time validation
         sample_size = 300000
-        set.seed(1007)
+        set.seed(1008)
         MS_CPWPROP_ADS_O2_OUTIME_SAMPLE <- MS_CPWPROP_ADS_O2_OUTIME[sample(1:nrow(MS_CPWPROP_ADS_O2_OUTIME), size = sample_size, replace = FALSE, prob = NULL),]
         MS_CPWPROP_ADS_O2_OUTIME_SAMPLE <- data.table(MS_CPWPROP_ADS_O2_OUTIME_SAMPLE)
       }#Filter out of time validation set
@@ -1257,7 +1257,7 @@
       {
         REDUCE_DEP <- 'FLAG_RETENTION'
         PREDICTION.RESULTS <- predict(RAGER_1, MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_RF[, !REDUCE_DEP, with = FALSE])
-        PREDICTION.RESULTS <- ifelse(PREDICTION.RESULTS > 0.5, 1, 0)
+        PREDICTION.RESULTS <- PREDICTION.RESULTS$predictions
         table_ <- table(PREDICTION.RESULTS, MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_RF$FLAG_RETENTION)
         print((table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1]))
         
@@ -1276,3 +1276,303 @@
   }#Naive bayes
   
 }# 11. Model performance improvement and validation
+{
+  {
+    #XGBoost trained on complete sample - XGB_stack
+    #Random forest trained on complltes sample - RF_STACK
+    #Logistic trained on complete stack - LOG_STACK
+  }#List of models
+  
+  {
+    #Sample dataset
+    MS_CPWPROP_ADS_O2_INTIME_SAMPLE_L <- MS_CPWPROP_ADS_O2_INTIME_SAMPLE[,colnames(MS_CPWPROP_ADS_O2_INTIME_SAMPLE) != 'FLAG_RETENTION']
+    FLAG_RETENTION                    <- data.frame(FLAG_RETENTION = MS_CPWPROP_ADS_O2_INTIME_SAMPLE$FLAG_RETENTION)
+  }#Sample dataset
+  
+  {
+    XGB_stack <- XGB_1
+    PREDICT.XGB_STACK <- predict(XGB_stack, data.matrix(XGB.TRAIN))
+    PREDICT.XGB_STACK <- as.data.frame(PROPENSITY <- as.numeric(PREDICT.XGB_STACK > 0.5))
+    ERROR.XGB_STACK   <- mean(PREDICT.XGB_STACK$PROPENSITY != DEP.TRAIN$FLAG_RETENTION)
+    print(paste("test-error=", ERROR.XGB_STACK))#35.54%
+    confusionMatrix(PREDICT.XGB_STACK$PROPENSITY,FLAG_RETENTION$FLAG_RETENTION)
+  }#XGB_STACK in sample stats
+  {
+    # $positive
+    # [1] "0"
+    # 
+    # $table
+    # Reference
+    # Prediction      0      1
+    # 0 218647 102240
+    # 1  85747 122210
+    # 
+    # $overall
+    # Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull AccuracyPValue  McnemarPValue 
+    # 6.445322e-01   2.653496e-01   6.432404e-01   6.458224e-01   5.755837e-01   0.000000e+00  1.397418e-316 
+    # 
+    # $byClass
+    # Sensitivity          Specificity       Pos Pred Value       Neg Pred Value            Precision               Recall 
+    # 0.7183026            0.5444865            0.6813832            0.5876696            0.6813832            0.7183026 
+    # F1           Prevalence       Detection Rate Detection Prevalence    Balanced Accuracy 
+    # 0.6993560            0.5755837            0.4134433            0.6067706            0.6313946 
+    # 
+    # $mode
+    # [1] "sens_spec"
+    # 
+    # $dots
+    # list()
+    # 
+    # attr(,"class")
+    # [1] "confusionMatrix"
+  }#Output
+  
+  {
+    RF_STACK <- RAGER_1
+    REDUCE.DEP.RF_STACK<- 'FLAG_RETENTION'
+    PREDICT.RF_STACK   <- predict(RF_STACK, MS_CPWPROP_ADS_O2_INTIME_SAMPLE_RF[, !REDUCE.DEP.RF_STACK, with = FALSE])
+    PREDICT.RF_STACK   <- PREDICT.RF_STACK$predictions
+    table_             <- table(PREDICT.RF_STACK, MS_CPWPROP_ADS_O2_INTIME_SAMPLE_RF$FLAG_RETENTION)
+    print((table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1]))
+    confusionMatrix(PREDICT.RF_STACK, FLAG_RETENTION$FLAG_RETENTION)
+  }#RF_STACK in sample stats
+  {
+    # [1] "0"
+    # 
+    # $table
+    # Reference
+    # Prediction      0      1
+    # 0 294080  16344
+    # 1  10314 208106
+    # 
+    # $overall
+    # Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull AccuracyPValue  McnemarPValue 
+    # 9.495919e-01   8.964609e-01   9.489989e-01   9.501801e-01   5.755837e-01   0.000000e+00  1.772833e-298 
+    # 
+    # $byClass
+    # Sensitivity          Specificity       Pos Pred Value       Neg Pred Value            Precision               Recall 
+    # 0.9661163            0.9271820            0.9473494            0.9527790            0.9473494            0.9661163 
+    # F1           Prevalence       Detection Rate Detection Prevalence    Balanced Accuracy 
+    # 0.9566408            0.5755837            0.5560808            0.5869860            0.9466491 
+    # 
+    # $mode
+    # [1] "sens_spec"
+    # 
+    # $dots
+    # list()
+    # 
+    # attr(,"class")
+    # [1] "confusionMatrix"
+  }#Ouptut
+  
+  {
+    LOG_STACK            <- LOG_1
+    REDUCE.DEP.LOG_STACK <- 'FLAG_RETENTION'
+    PREDICT.LOG_STACK    <- predict(LOG_STACK, MS_CPWPROP_ADS_O2_INTIME_SAMPLE_LOG[, !REDUCE.DEP.LOG_STACK, with = FALSE])
+    PREDICT.LOG_STACK    <- ifelse(PREDICT.LOG_STACK > 0.5, 1, 0)
+    table_               <- table(PREDICTION.RESULTS, MS_CPWPROP_ADS_O2_INTIME_SAMPLE_LOG$FLAG_RETENTION)
+    print((table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1]))
+    confusionMatrix(PREDICT.LOG_STACK, FLAG_RETENTION$FLAG_RETENTION)
+  }#LOG_STACK in sample stats
+  {
+    # $positive
+    # [1] "0"
+    # 
+    # $table
+    # Reference
+    # Prediction      0      1
+    # 0 292139 194335
+    # 1  12255  30115
+    # 
+    # $overall
+    # Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull AccuracyPValue  McnemarPValue 
+    # 0.6093555      0.1051091      0.6080390      0.6106708      0.5755837      0.0000000      0.0000000 
+    # 
+    # $byClass
+    # Sensitivity          Specificity       Pos Pred Value       Neg Pred Value            Precision               Recall 
+    # 0.9597397            0.1341724            0.6005234            0.7107623            0.6005234            0.9597397 
+    # F1           Prevalence       Detection Rate Detection Prevalence    Balanced Accuracy 
+    # 0.7387807            0.5755837            0.5524105            0.9198819            0.5469561 
+    # 
+    # $mode
+    # [1] "sens_spec"
+    # 
+    # $dots
+    # list()
+    # 
+    # attr(,"class")
+    # [1] "confusionMatrix"
+  }#Output
+  
+  {
+    COLLATED.PREDICTIONS       <- cbind(PREDICT.XGB_STACK, PREDICT.RF_STACK, PREDICT.LOG_STACK, FLAG_RETENTION)
+    COLLATED.PREDICTIONS[]     <- lapply(COLLATED.PREDICTIONS, as.numeric)
+    str(COLLATED.PREDICTIONS)
+    COLLATED.PREDICTIONS$PREDICT.RF_STACK <- ifelse(COLLATED.PREDICTIONS$PREDICT.RF_STACK == 2, 1, 0)
+    confusionMatrix(COLLATED.PREDICTIONS$`PROPENSITY <- as.numeric(PREDICT.XGB_STACK > 0.5)`, COLLATED.PREDICTIONS$PREDICT.RF_STACK)
+    XGB_META                   <- xgboost(data = data.matrix(COLLATED.PREDICTIONS),
+                                          label = as.numeric(FLAG_RETENTION$FLAG_RETENTION),
+                                          eta = 0.1,
+                                          max_depth = 5,
+                                          nround=100, 
+                                          seed = 1007,
+                                          objective = "binary:logistic",
+                                          nthread = 3,
+                                          verbose = 0
+                                          )
+    PREDICT.XGB_META <- predict(XGB_META, data.matrix(COLLATED.PREDICTIONS))
+    PREDICT.XGB_META <- as.data.frame(PROPENSITY <- as.numeric(PREDICT.XGB_META > 0.5))
+    ERROR.XGB_META   <- mean(PREDICT.XGB_META$PROPENSITY != DEP.TRAIN$FLAG_RETENTION)
+    print(paste("test-error=", ERROR.XGB_META))#35.54%
+    confusionMatrix(PREDICT.XGB_META$PROPENSITY,FLAG_RETENTION$FLAG_RETENTION)
+    
+    {
+      k = 10
+      set.seed(1007)
+      TRAIN.XGB_META    <- COLLATED.PREDICTIONS
+      DEP.XGB_META      <- FLAG_RETENTION
+      TRAIN.XGB_META$ID <- sample(1:k, nrow(TRAIN.XGB_META), replace = T)
+      DEP.XGB_META$ID   <- TRAIN.XGB_META$ID
+      error             <- numeric()
+      for (i in 1:k) {
+        TRAIN.F <- TRAIN.XGB_META[TRAIN.XGB_META$ID != i,][,!(colnames(TRAIN.XGB_META) == "ID")]
+        TEST.F  <- TRAIN.XGB_META[TRAIN.XGB_META$ID == i,][,!(colnames(TRAIN.XGB_META) == "ID")]
+        TRAIN.L <- data.frame(FLAG_RETENTION = DEP.XGB_META[DEP.XGB_META$ID != i,][,!(colnames(DEP.XGB_META) == "ID")])
+        TEST.L  <- data.frame(FLAG_RETENTION = DEP.XGB_META[DEP.XGB_META$ID == i,][,!(colnames(DEP.XGB_META) == "ID")])
+        #XGBoost algorithm :
+        set.seed(1007)
+        XGB_META_K <- xgboost(data = data.matrix(TRAIN.F), 
+                          label = TRAIN.L$FLAG_RETENTION, 
+                          eta = 0.1,
+                          max_depth = 5,
+                          nround=100, 
+                          seed = 1007,
+                          objective = "binary:logistic",
+                          nthread = 3,
+                          verbose = 0
+        )
+        PREDICT.XGB_META_K <- predict(XGB_META_K, data.matrix(TEST.F))
+        PREDICT.XGB_META_K <- as.data.frame(as.numeric(PREDICT.XGB_META_K > 0.5))
+        error[i]        <- mean(PREDICT.XGB_META_K$`as.numeric(PREDICT.XGB_META_K > 0.5)` != TEST.L$FLAG_RETENTION)
+        print(paste('Progress = ', round(i/k,2)*100,"%", ' | Accuracy = ', round(1-error[i],4)*100, "%", sep = ""))
+      }
+      bias     <- mean(error)
+      variance <- sd(error)
+      #print(error)
+      print(paste("Bias = ", bias, " & Variance = ", variance))
+}#
+      
+      
+    }#k - fold cross validation
+  
+  {
+    
+    {#Filter in significant variables
+      MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_XGB_ENC <- data.table(MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_XGB_ENC)
+      MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_XGB_ENC <- MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_XGB_ENC[,
+                                                                                         KEEP_SIG,
+                                                                                         with = FALSE]
+      MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_XGB_ENC <- data.frame(MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_XGB_ENC)
+      #Divide the data into train and test
+      XGB.TEST <- MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_XGB_ENC
+      DEP.TEST <- data.frame(FLAG_RETENTION = FLAG_RETENTION)
+      XGB.TEST[] <- lapply(XGB.TEST, as.numeric)
+    }#Filter in significant variables and create validation dataset
+    #Train model on complete data - XGB_STACK
+    {
+      #get feature real names
+      NAMES <- dimnames(data.matrix(XGB.TEST))[[2]]
+      #compute feature importance matrix
+      #importance_matrix <- xgb.importance(NAMES, model = XGB_1)
+      #xgb.plot.importance(importance_matrix[1:20,])
+      pred <- predict(XGB_stack, data.matrix(XGB.TEST))
+      prediction <- as.data.frame(as.numeric(pred > 0.5))
+      err <- mean(as.numeric(pred > 0.5) != DEP.TEST$FLAG_RETENTION)
+      print(paste("test-error=", err))#38.0%
+      confusionMatrix(prediction$`as.numeric(pred > 0.5)`,DEP.TEST$FLAG_RETENTION)
+      
+    }#Test model on out of time validation set
+    
+    {
+      REDUCE_DEP <- 'FLAG_RETENTION'
+      PREDICTION.RESULTS <- predict(LOG_STACK, MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_LOG[, !REDUCE_DEP, with = FALSE])
+      PREDICTION.RESULTS <- ifelse(PREDICTION.RESULTS > 0.5, 1, 0)
+      table_ <- table(PREDICTION.RESULTS, MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_LOG$FLAG_RETENTION)
+      print((table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1]))
+    }#lOG
+    
+    {
+      REDUCE_DEP <- 'FLAG_RETENTION'
+      PREDICTION.RESULTS <- predict(RF_STACK, MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_RF[, !REDUCE_DEP, with = FALSE])
+      PREDICTION.RESULTS <- PREDICTION.RESULTS$predictions
+      table_ <- table(PREDICTION.RESULTS, MS_CPWPROP_ADS_O2_OUTIME_SAMPLE_RF$FLAG_RETENTION)
+      print((table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1]))
+    }#Ranger
+    
+    {
+      COLLATED.PREDICTIONS       <- cbind(PREDICT.XGB_STACK, PREDICT.RF_STACK, FLAG_RETENTION)
+      COLLATED.PREDICTIONS[]     <- lapply(COLLATED.PREDICTIONS, as.numeric)
+      str(COLLATED.PREDICTIONS)
+      COLLATED.PREDICTIONS$PREDICT.RF_STACK <- ifelse(COLLATED.PREDICTIONS$PREDICT.RF_STACK == 2, 1, 0)
+      confusionMatrix(COLLATED.PREDICTIONS$`PROPENSITY <- as.numeric(PREDICT.XGB_STACK > 0.5)`, COLLATED.PREDICTIONS$PREDICT.RF_STACK)
+      XGB_META                   <- xgboost(data = data.matrix(COLLATED.PREDICTIONS),
+                                            label = as.numeric(FLAG_RETENTION$FLAG_RETENTION),
+                                            eta = 0.1,
+                                            max_depth = 5,
+                                            nround=100, 
+                                            seed = 1007,
+                                            objective = "binary:logistic",
+                                            nthread = 3,
+                                            verbose = 0
+      )
+      PREDICT.XGB_META <- predict(XGB_META, data.matrix(COLLATED.PREDICTIONS))
+      PREDICT.XGB_META <- as.data.frame(PROPENSITY <- as.numeric(PREDICT.XGB_META > 0.5))
+      ERROR.XGB_META   <- mean(PREDICT.XGB_META$PROPENSITY != DEP.TRAIN$FLAG_RETENTION)
+      print(paste("test-error=", ERROR.XGB_META))#35.54%
+      confusionMatrix(PREDICT.XGB_META$PROPENSITY,FLAG_RETENTION$FLAG_RETENTION)
+      
+      {
+        k = 10
+        set.seed(1007)
+        TRAIN.XGB_META    <- COLLATED.PREDICTIONS
+        DEP.XGB_META      <- FLAG_RETENTION
+        TRAIN.XGB_META$ID <- sample(1:k, nrow(TRAIN.XGB_META), replace = T)
+        DEP.XGB_META$ID   <- TRAIN.XGB_META$ID
+        error             <- numeric()
+        for (i in 1:k) {
+          TRAIN.F <- TRAIN.XGB_META[TRAIN.XGB_META$ID != i,][,!(colnames(TRAIN.XGB_META) == "ID")]
+          TEST.F  <- TRAIN.XGB_META[TRAIN.XGB_META$ID == i,][,!(colnames(TRAIN.XGB_META) == "ID")]
+          TRAIN.L <- data.frame(FLAG_RETENTION = DEP.XGB_META[DEP.XGB_META$ID != i,][,!(colnames(DEP.XGB_META) == "ID")])
+          TEST.L  <- data.frame(FLAG_RETENTION = DEP.XGB_META[DEP.XGB_META$ID == i,][,!(colnames(DEP.XGB_META) == "ID")])
+          #XGBoost algorithm :
+          set.seed(1007)
+          XGB_META_K <- xgboost(data = data.matrix(TRAIN.F), 
+                                label = TRAIN.L$FLAG_RETENTION, 
+                                eta = 0.1,
+                                max_depth = 5,
+                                nround=100, 
+                                seed = 1007,
+                                objective = "binary:logistic",
+                                nthread = 3,
+                                verbose = 0
+          )
+          PREDICT.XGB_META_K <- predict(XGB_META_K, data.matrix(TEST.F))
+          PREDICT.XGB_META_K <- as.data.frame(as.numeric(PREDICT.XGB_META_K > 0.5))
+          error[i]        <- mean(PREDICT.XGB_META_K$`as.numeric(PREDICT.XGB_META_K > 0.5)` != TEST.L$FLAG_RETENTION)
+          print(paste('Progress = ', round(i/k,2)*100,"%", ' | Accuracy = ', round(1-error[i],4)*100, "%", sep = ""))
+        }
+        bias     <- mean(error)
+        variance <- sd(error)
+        #print(error)
+        print(paste("Bias = ", bias, " & Variance = ", variance))
+      }#
+      
+      
+    }#k - fold cross validation
+    
+    
+    
+    
+  }#Out of time validation
+  
+  }#Stack output of each technique
