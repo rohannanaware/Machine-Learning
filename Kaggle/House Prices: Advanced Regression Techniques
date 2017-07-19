@@ -1,0 +1,108 @@
+#Author : Rohan M. Nanaware
+#Date C.: 12th Jul 2017
+#Date M.: 12th Jul 2017
+#       : 14th Jul 2017 : Run basic linear model to check knowledge level and base accuracy
+#Purpose: Predict sales prices and practice feature engineering, RFs, and gradient boosting
+
+{
+  library(data.table)
+  library(Matrix)
+  library(rpart)
+  library(xgboost)
+  library(readr)
+  library(stringr)
+  library(caret)
+  library(car)
+  library(data.table)
+  library(randomForest)
+  library(ROCR)
+  library(dplyr)
+}#01. Load required packages
+{
+  setwd("E:/Delivery/1 Active/Kaggle/House Prices Advanced Regression Technique") 
+}#02. Set working directory
+{
+  train    <- read.csv("train.csv", header = T, stringsAsFactors = F)
+  test     <- read.csv("test.csv", header = T, stringsAsFactors = F)
+  HP.TOTAL <- rbind(train[,!(colnames(train) == "SalePrice")],test)
+}#03. Load and understand data
+{
+  nrow(HP.TOTAL)
+  sapply(HP.TOTAL, function(x) sum(is.na(x))) / nrow(HP.TOTAL)
+  View(head(HP.TOTAL))
+  sapply(HP.TOTAL, function(x) length(unique(x)))
+}#04. Understand data
+{
+  str(HP.TOTAL)
+  sapply(HP.TOTAL, function(x) sum(is.na(x)))/length(HP.TOTAL$Id)*100
+  HP.TOTAL.IMPUTE <- HP.TOTAL
+  
+  #High NAs    - More than 50%
+  #Alley       - NA 	No alley access
+  #FireplaceQu - NA	No Fireplace
+  #PoolQC      - NA	No Pool
+  #Fence       - No Fence
+  #MiscFeature - NA	None
+  
+  #Order of appearance in data
+  #Id         - House ID
+  #MSSubClass - Type of dwelling - Categorical - Convert to factor, Check distribution and clubbing
+  #MSZoning   - Zoning classification - Categorical - Convert to factor, Level reduction for Residential
+  #LotFrontage- Linear feet of street - Numeric - Predict to impute
+  #LotArea    - Lot size - Numeric - Outlier
+  summary(HP.TOTAL.IMPUTE$LotArea)
+  #Street     - Type of road access - Check distribution
+  #Alley      - Type of alley access - Categorical - Define flag for NA, Check dist.
+  #LotShape   - General shape of property - Categorical - Distribution and price variation
+  #LandContour- Flatness of the property - Categorical - Check distribution
+  #Utilities  - Type of utilities available - Categorical - Check distribution - Need to impute0
+  #LotConfig  - Lot configuration - Categorical - Check distribution
+  #LandSlope  - Slope of property - Categorical
+  #Neighborhood-Physical locations - Categorical - Check distribution, reduce level
+  #Condition1 - Proximity to various conditions - Cat - Check dist, reduce level
+  #Condition2 - Check dependency on comndition 1
+  #BldgType   - Type of dwelling - Cat - Check distribution and reduce level
+  #HouseStyle - Style of dwelling - Cat - Check if a new feature can be define using house style and building type
+  #OverallQual- Rates the overall material - Cat - Convert to factor - Check dist
+  #OverallCond- Rates the overall condition - Cat - Convert to factor
+  #YearBuilt  - Original construction - Date - Check trend of price with year
+  #YearRemodAdd-Remodel date (same as construction date if no remodelling) - Date - Check if the recency of remodelling affects the price
+  #RoofStyle  - Type of roof - Cat - Check dist.
+  #RoofMatl   - Roof material - Cat - Check dist., Define new using Roofmaterial and Style
+  #Exterior1st- Exterior covering - Cat - Check dist. and impute NAs
+  #Exterior2nd- Exterior covering - Cat - Check dist. and impute NAs
+  #MasVnrType - Masonry veneer type - Cat - Check dist. and impute NAs
+  #MasVnrArea - Masonry veneer area - Cat - Check dist. and impute NAs
+  #ExterQual  - Quality of material on exterior - Cat - Check distribution
+  #ExterCond  - Evaluates the present condition of marterial - Cat - Check dist., define new feature with ExterQual
+  #Foundation - Type of foundation - Cat - Check distribution
+  #BsmtQual   - Evaluates the height of the basement - Cat - Check distribution, impute NAs
+  #BsmtCond   - Evaluates the general condition of basement - Cat - Check dist,define new feature with BsmtQual
+  #BsmtExposure-Refers to walkout or garden level walls - Cat - Check distribution, impute NAs
+  #BsmtFinType1-Rating of basement finished area - Cat - Check dist., impute NAs
+  #BsmtFinSF1 - Type 1 finished square feet - Num - Outlier, NA imputation
+  #BsmtFinType2-Rating of basement finished area - Cat
+  #BsmtFinSF2 - Type 2 finished square feet - Num - Check box plot results and impute
+  #BsmtUnfSF  - Unfinished square feet - Num - Impute NAs
+  #TotalBsmtSF- Total square feet - Num - Impute NAs
+  #Heating    - Type of heating - Cat - Check dist.
+  #HeatingQC  - Heating quality - Cat - Check dist., define new features
+  #CentralAir - Central air conditioning - Cat
+  #Electrical - Electrical system - Cat
+  
+}#04. Impute NAs
+{
+  
+  #http://www.statmethods.net/stats/regression.html
+  str(HP.TOTAL)
+  rpart_1 <- rpart(SalePrice ~ ., data = train[, !(colnames(train) %in% c("Id"))], method = "anova")
+  summary(rpart_1)
+  View(data.frame(rpart_1$variable.importance))
+  predictions <- predict(rpart_1, test[, !(colnames(test) %in% c("Id"))])
+  #kaggle blind submission - 
+  RESULTS <- cbind(test$Id, predictions)
+  colnames(RESULTS) <- c("Id","SalePrice")
+  write.csv(RESULTS, "170714_HP_ITER1.csv", row.names = F)
+  #Rank - 1676/1880 Score - 0.24474
+  
+}#05. Base rpart
