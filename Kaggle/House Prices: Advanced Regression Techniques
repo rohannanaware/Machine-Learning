@@ -17,6 +17,12 @@
   library(randomForest)
   library(ROCR)
   library(dplyr)
+  # Create the mode function.
+  getmode <- function(v) {
+    uniqv <- unique(v)
+    uniqv[which.max(tabulate(match(v, uniqv)))]
+  }
+  
 }#01. Load required packages
 {
   setwd("E:/Delivery/1 Active/Kaggle/House Prices Advanced Regression Technique") 
@@ -25,7 +31,7 @@
   train    <- read.csv("train.csv", header = T, stringsAsFactors = F)
   test     <- read.csv("test.csv", header = T, stringsAsFactors = F)
   HP.TOTAL <- rbind(train[,!(colnames(train) == "SalePrice")],test)
-}#03. Load and understand data
+}#03. Load data
 {
   nrow(HP.TOTAL)
   sapply(HP.TOTAL, function(x) sum(is.na(x))) / nrow(HP.TOTAL)
@@ -33,29 +39,43 @@
   sapply(HP.TOTAL, function(x) length(unique(x)))
 }#04. Understand data
 {
-  str(HP.TOTAL)
-  sapply(HP.TOTAL, function(x) sum(is.na(x)))/length(HP.TOTAL$Id)*100
-  HP.TOTAL.IMPUTE <- HP.TOTAL
-  
-  #High NAs    - More than 50%
-  #Alley       - NA 	No alley access
-  #FireplaceQu - NA	No Fireplace
-  #PoolQC      - NA	No Pool
-  #Fence       - No Fence
-  #MiscFeature - NA	None
+  #str(HP.TOTAL)
+  #sapply(HP.TOTAL, function(x) sum(is.na(x)))/length(HP.TOTAL$Id)*100
+  #Imputation
+    #Imputation techniques - overall median, selective mean/median, prediction, KNN
+  #Outlier treatment
   
   #Order of appearance in data
-  #Id         - House ID
+  #Id         - House ID, filter out
+  HP.TOTAL.IMPUTE <- HP.TOTAL[, !(colnames(HP.TOTAL) == 'Id')]
+  
   #MSSubClass - Type of dwelling - Categorical - Convert to factor, Check distribution and clubbing
-  #MSZoning   - Zoning classification - Categorical - Convert to factor, Level reduction for Residential
-  #LotFrontage- Linear feet of street - Numeric - Predict to impute
+  #barplot(prop.table(table(HP.TOTAL.IMPUTE$MSSubClass)))
+  HP.TOTAL.IMPUTE$MSSubClass <- as.factor(HP.TOTAL.IMPUTE$MSSubClass)
+  unique(HP.TOTAL.IMPUTE$MSSubClass)
+  
+  #MSZoning   - Zoning classification - Categorical - Convert to factor, Level reduction for Residential, imputation
+  table(HP.TOTAL.IMPUTE$MSZoning)
+  HP.TOTAL.IMPUTE$MSZoning[is.na(HP.TOTAL.IMPUTE$MSZoning)] <- getmode(HP.TOTAL.IMPUTE$MSZoning[!is.na(HP.TOTAL.IMPUTE$MSZoning)])
+
+  #LotFrontage- Linear feet of street - Numeric - Impute
+  #sapply(HP.TOTAL.IMPUTE, function(x) sum(is.na(x)))
+  #summary(HP.TOTAL.IMPUTE$LotFrontage)
+  #Performing imputation by taking median values, for future improvements impute by prediction or use KNN
+  HP.TOTAL.IMPUTE$LotFrontage[is.na(HP.TOTAL.IMPUTE$LotFrontage)] <- median(HP.TOTAL.IMPUTE$LotFrontage[!is.na(HP.TOTAL.IMPUTE$LotFrontage)])
+  
   #LotArea    - Lot size - Numeric - Outlier
-  summary(HP.TOTAL.IMPUTE$LotArea)
   #Street     - Type of road access - Check distribution
   #Alley      - Type of alley access - Categorical - Define flag for NA, Check dist.
+  HP.TOTAL.IMPUTE$Alley[is.na(HP.TOTAL.IMPUTE$Alley)] <- 'No alley access'
+  
   #LotShape   - General shape of property - Categorical - Distribution and price variation
+  #plot(x = train$LotShape,y = train$SalePrice, xlab = "Sale price", ylab = "Lot shape")
+  
   #LandContour- Flatness of the property - Categorical - Check distribution
-  #Utilities  - Type of utilities available - Categorical - Check distribution - Need to impute0
+  #Utilities  - Type of utilities available - Categorical - Check distribution - Need to impute
+  table(HP.TOTAL.IMPUTE$Utilities)
+  
   #LotConfig  - Lot configuration - Categorical - Check distribution
   #LandSlope  - Slope of property - Categorical
   #Neighborhood-Physical locations - Categorical - Check distribution, reduce level
@@ -69,28 +89,137 @@
   #YearRemodAdd-Remodel date (same as construction date if no remodelling) - Date - Check if the recency of remodelling affects the price
   #RoofStyle  - Type of roof - Cat - Check dist.
   #RoofMatl   - Roof material - Cat - Check dist., Define new using Roofmaterial and Style
+  
   #Exterior1st- Exterior covering - Cat - Check dist. and impute NAs
+  HP.TOTAL.IMPUTE$Exterior1st[is.na(HP.TOTAL.IMPUTE$Exterior1st)] <- getmode(HP.TOTAL.IMPUTE$Exterior1st)
+  
   #Exterior2nd- Exterior covering - Cat - Check dist. and impute NAs
+  HP.TOTAL.IMPUTE$Exterior2nd[is.na(HP.TOTAL.IMPUTE$Exterior2nd)] <- getmode(HP.TOTAL.IMPUTE$Exterior2nd)
+  
   #MasVnrType - Masonry veneer type - Cat - Check dist. and impute NAs
+  #table(HP.TOTAL.IMPUTE$MasVnrType)
+  HP.TOTAL.IMPUTE$MasVnrType[is.na(HP.TOTAL.IMPUTE$MasVnrType)] <- getmode(HP.TOTAL.IMPUTE$MasVnrType)
+  
   #MasVnrArea - Masonry veneer area - Cat - Check dist. and impute NAs
+  HP.TOTAL.IMPUTE$MasVnrArea[is.na(HP.TOTAL.IMPUTE$MasVnrArea)] <- median(HP.TOTAL.IMPUTE$MasVnrArea, na.rm = T)
+  
   #ExterQual  - Quality of material on exterior - Cat - Check distribution
   #ExterCond  - Evaluates the present condition of marterial - Cat - Check dist., define new feature with ExterQual
   #Foundation - Type of foundation - Cat - Check distribution
   #BsmtQual   - Evaluates the height of the basement - Cat - Check distribution, impute NAs
+  HP.TOTAL.IMPUTE$BsmtQual[is.na(HP.TOTAL.IMPUTE$BsmtQual)] <- "No Basement"
+  
   #BsmtCond   - Evaluates the general condition of basement - Cat - Check dist,define new feature with BsmtQual
+  HP.TOTAL.IMPUTE$BsmtCond[is.na(HP.TOTAL.IMPUTE$BsmtCond)] <- "No Basement"
+  
   #BsmtExposure-Refers to walkout or garden level walls - Cat - Check distribution, impute NAs
+  HP.TOTAL.IMPUTE$BsmtExposure[is.na(HP.TOTAL.IMPUTE$BsmtExposure)] <- "No Basement"
+  
   #BsmtFinType1-Rating of basement finished area - Cat - Check dist., impute NAs
+  HP.TOTAL.IMPUTE$BsmtFinType1[is.na(HP.TOTAL.IMPUTE$BsmtFinType1)] <- "No Basement"
+  
   #BsmtFinSF1 - Type 1 finished square feet - Num - Outlier, NA imputation
+  BSMTSF1_TYPE <- aggregate(HP.TOTAL.IMPUTE$BsmtFinSF1, list(HP.TOTAL.IMPUTE$BsmtFinType1), FUN = "mean")
+  BSMTSF1_TYPE$x[BSMTSF1_TYPE$Group.1 == "No Basement"] = 0
+  HP.TOTAL.IMPUTE$BsmtFinSF1[is.na(HP.TOTAL.IMPUTE$BsmtFinSF1)] <- BSMTSF1_TYPE$x[BSMTSF1_TYPE$Group.1 == HP.TOTAL.IMPUTE$BsmtFinType1[is.na(HP.TOTAL.IMPUTE$BsmtFinSF1)]]
+  
   #BsmtFinType2-Rating of basement finished area - Cat
+  HP.TOTAL.IMPUTE$BsmtFinType2[is.na(HP.TOTAL.IMPUTE$BsmtFinType2)] <- "No Basement"
+  
   #BsmtFinSF2 - Type 2 finished square feet - Num - Check box plot results and impute
+  unique(HP.TOTAL.IMPUTE$BsmtFinType2[is.na(HP.TOTAL.IMPUTE$BsmtFinSF2)])
+  HP.TOTAL.IMPUTE$BsmtFinSF2[is.na(HP.TOTAL.IMPUTE$BsmtFinSF2)] <- 0
+  
   #BsmtUnfSF  - Unfinished square feet - Num - Impute NAs
+  unique(HP.TOTAL.IMPUTE$BsmtFinType2[is.na(HP.TOTAL.IMPUTE$BsmtUnfSF)])
+  HP.TOTAL.IMPUTE$BsmtUnfSF[is.na(HP.TOTAL.IMPUTE$BsmtUnfSF)] <- 0
+  
   #TotalBsmtSF- Total square feet - Num - Impute NAs
+  HP.TOTAL.IMPUTE$TotalBsmtSF[is.na(HP.TOTAL.IMPUTE$TotalBsmtSF)] <- 0
   #Heating    - Type of heating - Cat - Check dist.
   #HeatingQC  - Heating quality - Cat - Check dist., define new features
   #CentralAir - Central air conditioning - Cat
   #Electrical - Electrical system - Cat
+  table(HP.TOTAL.IMPUTE$Electrical)
+  HP.TOTAL.IMPUTE$Electrical[is.na(HP.TOTAL.IMPUTE$Electrical)] <- getmode(HP.TOTAL.IMPUTE$Electrical)
   
-}#04. Impute NAs
+  #X1stFlrSF  - First Floor square feet - Numeric, check dist., corelation
+  #X2ndFlrSF  - Second floor square feet - Numeric, chekc dist., corelation
+  #LowQualFinSF-Low quality finished square feet - Numeric, check dist., corelation
+  #GrLivArea  - Above grade (ground) living area - Numeric, check dist.
+  #BsmtFullBath-Basement full bathrooms - Numeric, check dist., imputation
+  table(HP.TOTAL.IMPUTE$BsmtFullBath)
+  HP.TOTAL.IMPUTE$BsmtFullBath[is.na(HP.TOTAL.IMPUTE$BsmtFullBath)] <- getmode(HP.TOTAL.IMPUTE$BsmtFullBath)
+  
+  #BsmtHalfBath-Basement half bathrooms - Numeric, check dist., imputation
+  HP.TOTAL.IMPUTE$BsmtHalfBath[is.na(HP.TOTAL.IMPUTE$BsmtHalfBath)] <- getmode(HP.TOTAL.IMPUTE$BsmtHalfBath)
+  
+  #FullBath   - Full bathrooms above grade - Numeric, check dist
+  #HalfBath   - Half baths above grade - Numeric, check dist
+  #Bedroom    - Bedrooms above grade
+  #Kitchen    - Kitchens above grade, numeric
+  #KitchenQual- Kitchen quality, character, impute
+  table(HP.TOTAL.IMPUTE$KitchenQual)
+  HP.TOTAL.IMPUTE$KitchenQual[is.na(HP.TOTAL.IMPUTE$KitchenQual)] <- getmode(HP.TOTAL.IMPUTE$KitchenQual)
+  
+  #TotRmsAbvGrd-Numeric, check dist.
+  #Functional - Home functionality, character
+  table(HP.TOTAL.IMPUTE$Functional)
+  HP.TOTAL.IMPUTE$Functional[is.na(HP.TOTAL.IMPUTE$Functional)] <- getmode(HP.TOTAL.IMPUTE$Functional)
+  
+  #Fireplaces - Number of fireplaces, numeric, check distribution
+  #FireplaceQu- Fireplace quality, character, combine with Fireplaces and reduce levels, replace NA	with "No Fireplace"
+  HP.TOTAL.IMPUTE$FireplaceQu[is.na(HP.TOTAL.IMPUTE$FireplaceQu)] <- "No Fireplace"
+  
+  #GarageType - Garage location, character, relpace NAs with "No Garage"
+  HP.TOTAL.IMPUTE$GarageType[is.na(HP.TOTAL.IMPUTE$GarageType)] <- "No Garage"
+  
+  #GarageYrBlt- Year garage was built, numeric, substract from current year? year of sale?
+  summary(HP.TOTAL.IMPUTE$GarageYrBlt)
+  HP.TOTAL.IMPUTE$GarageYrBlt[is.na(HP.TOTAL.IMPUTE$GarageYrBlt)] <- median(HP.TOTAL.IMPUTE$GarageYrBlt, na.rm = T)
+  
+  #GarageFinish-Interior finish, character, replace NAs with "No Garage"
+  HP.TOTAL.IMPUTE$GarageFinish[is.na(HP.TOTAL.IMPUTE$GarageFinish)] <- "No Garage"
+  
+  #GarageCars - Car capacity, numeric, impute NA with median
+  summary(HP.TOTAL.IMPUTE$GarageCars)
+  HP.TOTAL.IMPUTE$GarageCars[is.na(HP.TOTAL.IMPUTE$GarageCars)] <- 0
+  
+  #GarageArea - Size of garage, check dependency with GarageCars
+  table(HP.TOTAL.IMPUTE$GarageArea)
+  table(HP.TOTAL.IMPUTE$GarageArea[HP.TOTAL.IMPUTE$GarageFinish == "No Garage"])
+  HP.TOTAL.IMPUTE$GarageArea[is.na(HP.TOTAL.IMPUTE$GarageArea)] <- 0
+  
+  #GarageQual - character, replace NAs with No garage
+  HP.TOTAL.IMPUTE$GarageQual[is.na(HP.TOTAL.IMPUTE$GarageQual)] <- "No Garage"
+  
+  #GarageCond - character, replace NAs with No garage, combine with GarageQual
+  HP.TOTAL.IMPUTE$GarageCond[is.na(HP.TOTAL.IMPUTE$GarageCond)] <- "No Garage"
+  
+  #PavedDrive - Paved driveway, character
+  #WoodDeckSF - numeric, outlier treatment, check dist.
+  #OpenPorchSF- numeric, outloer treatment, check dist.
+  #EnclosedPorch-numeric, outlier tratment, check dist.
+  #3SsnPorch
+  #ScreenPorch
+  #PoolArea
+  #PoolQC     - Replace NAs with "No Pool"
+  HP.TOTAL.IMPUTE$PoolQC[is.na(HP.TOTAL.IMPUTE$PoolQC)] <- "No Pool"
+  
+  #Fence      - Replca NAs with "No Fence"
+  HP.TOTAL.IMPUTE$Fence[is.na(HP.TOTAL.IMPUTE$Fence)] <- "No Fence"
+  
+  #MiscFeature- Replca NAs with "None"
+  HP.TOTAL.IMPUTE$MiscFeature[is.na(HP.TOTAL.IMPUTE$MiscFeature)] <- "None"
+  
+  #MiscVal    - outlier treatment
+  #MoSold
+  #YrSold     - use to calculate the age/recency of renovation of the house/garage
+  #SaleType   - Type of payment 
+  table(HP.TOTAL.IMPUTE$SaleType)
+  HP.TOTAL.IMPUTE$SaleType[is.na(HP.TOTAL.IMPUTE$SaleType)] <- getmode(HP.TOTAL.IMPUTE$SaleType)
+  
+}#05. Impute NAs
 {
   
   #http://www.statmethods.net/stats/regression.html
@@ -105,4 +234,70 @@
   write.csv(RESULTS, "170714_HP_ITER1.csv", row.names = F)
   #Rank - 1676/1880 Score - 0.24474
   
-}#05. Base rpart
+}#06. Modelling technique - rpart
+{
+  #Run module - 01,02,03,05
+  #Convert all categorical to factor
+  str(HP.TOTAL.IMPUTE)
+  
+  HP.TOTAL.IMPUTE[, (colnames(HP.TOTAL.IMPUTE) %in% c("OverallQual","OverallCond") |
+                       sapply(HP.TOTAL.IMPUTE, function(x) class(x)) == "character")] <-
+  data.frame(sapply(HP.TOTAL.IMPUTE[, (colnames(HP.TOTAL.IMPUTE) %in% c("OverallQual","OverallCond") |
+                                            sapply(HP.TOTAL.IMPUTE, function(x) class(x)) == "character")
+                                       ],
+                       function(x) as.factor(x)))
+  #Features to be encoded
+  FEATURES_OHE <- c( "MSSubClass",    "MSZoning",      "Street",      
+                     "Alley",         "LotShape",      "LandContour",  
+                     "Utilities",     "LotConfig",     "LandSlope",    
+                     "Neighborhood",  "Condition1",    "Condition2",   
+                     "BldgType",      "HouseStyle",    "OverallQual",  
+                     "OverallCond",   "RoofStyle",     "RoofMatl",     
+                     "Exterior1st",   "Exterior2nd",   "MasVnrType",   
+                     "ExterQual",     "ExterCond",     "Foundation",   
+                     "BsmtQual",      "BsmtCond",      "BsmtExposure", 
+                     "BsmtFinType1",  "BsmtFinType2",  "Heating",      
+                     "HeatingQC",     "CentralAir",    "Electrical",   
+                     "KitchenQual",   "Functional",    "FireplaceQu",  
+                     "GarageType",    "GarageFinish",  "GarageQual",   
+                     "GarageCond",    "PavedDrive",    "PoolQC",       
+                     "Fence",         "MiscFeature",   "SaleType",     
+                     "SaleCondition")
+  DUMMIES <- dummyVars(~  MSSubClass+    MSZoning+      Street+      
+                        Alley+         LotShape+      LandContour+  
+                        Utilities+     LotConfig+     LandSlope+    
+                        Neighborhood+  Condition1+    Condition2+   
+                        BldgType+      HouseStyle+    OverallQual+  
+                        OverallCond+   RoofStyle+     RoofMatl+     
+                        Exterior1st+   Exterior2nd+   MasVnrType+   
+                        ExterQual+     ExterCond+     Foundation+   
+                        BsmtQual+      BsmtCond+      BsmtExposure+ 
+                        BsmtFinType1+  BsmtFinType2+  Heating+      
+                        HeatingQC+     CentralAir+    Electrical+   
+                        KitchenQual+   Functional+    FireplaceQu+  
+                        GarageType+    GarageFinish+  GarageQual+   
+                        GarageCond+    PavedDrive+    PoolQC+       
+                        Fence+         MiscFeature+   SaleType+     
+                        SaleCondition,
+                       data = HP.TOTAL.IMPUTE)
+  HP.TOTAL.IMPUTE.OHE <- data.frame(predict(DUMMIES, newdata = HP.TOTAL.IMPUTE))
+  HP.TOTAL.IMPUTE.ENC <- data.frame(cbind(HP.TOTAL.IMPUTE[, !(colnames(HP.TOTAL.IMPUTE) %in% FEATURES_OHE)], 
+                                          HP.TOTAL.IMPUTE.OHE))
+  {
+    HP.TOTAL.IMPUTE.ENC.TRAIN <- data.frame(cbind(HP.TOTAL.IMPUTE.ENC[1:nrow(train),],  train$SalePrice)) 
+    colnames(HP.TOTAL.IMPUTE.ENC.TRAIN)[length(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN))] <- "SalePrice"
+    HP.TOTAL.IMPUTE.ENC.TEST  <- data.frame(HP.TOTAL.IMPUTE.ENC[-(1:nrow(train)),])
+  }#Split into train and test data
+  
+  #Split train set into 70:30 for validation
+  #Run XGBoost
+  set.seed(1007)
+  HP.TOTAL.IMPUTE.ENC.TRAIN.7 <- HP.TOTAL.IMPUTE.ENC.TRAIN[1:(0.7*nrow(HP.TOTAL.IMPUTE.ENC.TRAIN)),]
+  HP.TOTAL.IMPUTE.ENC.TRAIN.3 <- HP.TOTAL.IMPUTE.ENC.TRAIN[-(1:(0.7*nrow(HP.TOTAL.IMPUTE.ENC.TRAIN))),]
+  
+  
+  
+  
+
+  
+}#07. Modelling technique - XGBoost
