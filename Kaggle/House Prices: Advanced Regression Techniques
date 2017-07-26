@@ -2,6 +2,12 @@
 #Date C.: 12th Jul 2017
 #Date M.: 12th Jul 2017
 #       : 14th Jul 2017 : Run basic linear model to check knowledge level and base accuracy
+#       : 27th Jul 2017 : Ran XGBoost on NA imputed dataset. 
+                          {
+                            #  Variable imprtance plots, use MAPE instead of RMSE, 
+                            #  learn how to interpret RMSE - thresholds etc, 
+                            #  k-fold validation, hypertuning, feature enginnering
+                          }# Next steps
 #Purpose: Predict sales prices and practice feature engineering, RFs, and gradient boosting
 
 {
@@ -294,10 +300,27 @@
   set.seed(1007)
   HP.TOTAL.IMPUTE.ENC.TRAIN.7 <- HP.TOTAL.IMPUTE.ENC.TRAIN[1:(0.7*nrow(HP.TOTAL.IMPUTE.ENC.TRAIN)),]
   HP.TOTAL.IMPUTE.ENC.TRAIN.3 <- HP.TOTAL.IMPUTE.ENC.TRAIN[-(1:(0.7*nrow(HP.TOTAL.IMPUTE.ENC.TRAIN))),]
+  XGB_1 <- xgboost(data = data.matrix(HP.TOTAL.IMPUTE.ENC.TRAIN.7[,!(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN.7) == "SalePrice")]),
+                   label = HP.TOTAL.IMPUTE.ENC.TRAIN.7$SalePrice,
+                   eta = 0.01,
+                   max_depth = 5,
+                   nround = 2000,
+                   seed = 1007,
+                   objective = "reg:linear",
+                   nthread = 3)
+  #Predict prices on the test data
+  PREDICTIONS <- predict(XGB_1, data.matrix(HP.TOTAL.IMPUTE.ENC.TRAIN.3[,!(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN.3) == "SalePrice")]))
+  RMSE        <- sqrt(mean((PREDICTIONS - HP.TOTAL.IMPUTE.ENC.TRAIN.3$SalePrice)^2))
+  #Kaggle submission - 
+  PREDICTIONS <- predict(XGB_1, data.matrix(HP.TOTAL.IMPUTE.ENC.TEST))
+  submission  <- cbind(test$Id, PREDICTIONS)
+  colnames(submission)   <- c("Id", "SalePrice")
+  write.csv(submission, "170727_HP_ITER2..csv", row.names = F)  
+  #Rank - 1127 of 1764, score - 0.14487
+  #Next steps - Use MAPE instead of RMSE, learn how to interpret RMSE - thresholds etc, k-fold validation, hypertuning, feature enginnering
   
-  
-  
-  
-
-  
+  #Use MAPE instead of RMSE
+  PREDICTIONS <- predict(XGB_1, data.matrix(HP.TOTAL.IMPUTE.ENC.TRAIN.3[,!(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN.3) == "SalePrice")]))
+  MAPE        <- mean(abs(PREDICTIONS - HP.TOTAL.IMPUTE.ENC.TRAIN.3$SalePrice)/HP.TOTAL.IMPUTE.ENC.TRAIN.3$SalePrice)
+    
 }#07. Modelling technique - XGBoost
