@@ -3,11 +3,12 @@
 #Date M.: 12th Jul 2017
 #       : 14th Jul 2017 : Run basic linear model to check knowledge level and base accuracy
 #       : 27th Jul 2017 : Ran XGBoost on NA imputed dataset. 
-                          {
-                            #  Variable imprtance plots, use MAPE instead of RMSE, 
+                          # Next steps
+                            #  Variable importance plots, use MAPE instead of RMSE, 
                             #  learn how to interpret RMSE - thresholds etc, 
                             #  k-fold validation, hypertuning, feature enginnering
-                          }# Next steps
+#       : 02nd Aug 2017 : Variable importance plots - observed marginal improvement in model o/p, 
+#                         model performace did not improve by nround and max_depth change
 #Purpose: Predict sales prices and practice feature engineering, RFs, and gradient boosting
 
 {
@@ -307,7 +308,8 @@
                    nround = 2000,
                    seed = 1007,
                    objective = "reg:linear",
-                   nthread = 3)
+                   nthread = 3,
+                   verbose = F)
   #Predict prices on the test data
   PREDICTIONS <- predict(XGB_1, data.matrix(HP.TOTAL.IMPUTE.ENC.TRAIN.3[,!(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN.3) == "SalePrice")]))
   RMSE        <- sqrt(mean((PREDICTIONS - HP.TOTAL.IMPUTE.ENC.TRAIN.3$SalePrice)^2))
@@ -322,5 +324,124 @@
   #Use MAPE instead of RMSE
   PREDICTIONS <- predict(XGB_1, data.matrix(HP.TOTAL.IMPUTE.ENC.TRAIN.3[,!(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN.3) == "SalePrice")]))
   MAPE        <- mean(abs(PREDICTIONS - HP.TOTAL.IMPUTE.ENC.TRAIN.3$SalePrice)/HP.TOTAL.IMPUTE.ENC.TRAIN.3$SalePrice)
+  {
+    k = 10
+    set.seed(1007)
+    HP.TOTAL.IMPUTE.ENC.TRAIN$ID <- sample(1:k, nrow(HP.TOTAL.IMPUTE.ENC.TRAIN), replace = T)
+    error        <- numeric()
+    #Run XGBoost
+    for (i in 1:k) {
+      TRAIN <- HP.TOTAL.IMPUTE.ENC.TRAIN[HP.TOTAL.IMPUTE.ENC.TRAIN$ID != i,][,!(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN) == "ID")]
+      TEST  <- HP.TOTAL.IMPUTE.ENC.TRAIN[HP.TOTAL.IMPUTE.ENC.TRAIN$ID == i,][,!(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN) == "ID")]
+      set.seed(1007)
+      XGB_K <- xgboost(data = data.matrix(TRAIN[,!(colnames(TRAIN) == "SalePrice")]),
+                       label = TRAIN$SalePrice,
+                       eta = 0.01,
+                       max_depth = 3,
+                       nround = 2000,
+                       seed = 1007,
+                       objective = "reg:linear",
+                       nthread = 3,
+                       verbose = F)
+      #Predict prices on the test data
+      PREDICTIONS <- predict(XGB_K, data.matrix(TEST[,!(colnames(TEST) == "SalePrice")]))
+      RMSE        <- sqrt(mean((PREDICTIONS - TEST$SalePrice)^2))
+      MAPE        <- mean(abs(PREDICTIONS - TEST$SalePrice)/TEST$SalePrice)
+      print(paste0("Iteration : ",i," RMSE : ",round(RMSE,2)," MAPE :",round(MAPE,4)))
+      error[i] <- MAPE
+    }
+    mean_MAPE <- mean(error)
+    var_MAPE  <- var(error)
+    print(paste0("Mape Mean : ",mean_MAPE,"Mape Variance : ",var_MAPE))
+  }#k - fold validation
+  {
+    # [1] "Iteration : 1 RMSE : 24815.73 MAPE :0.0918"
+    # [1] "Iteration : 2 RMSE : 37513.4 MAPE :0.0951"
+    # [1] "Iteration : 3 RMSE : 20192.36 MAPE :0.0855"
+    # [1] "Iteration : 4 RMSE : 27539.08 MAPE :0.1034"
+    # [1] "Iteration : 5 RMSE : 25754.75 MAPE :0.0797"
+    # [1] "Iteration : 6 RMSE : 26975.5 MAPE :0.0944"
+    # [1] "Iteration : 7 RMSE : 42673.56 MAPE :0.1074"
+    # [1] "Iteration : 8 RMSE : 22478.96 MAPE :0.0759"
+    # [1] "Iteration : 9 RMSE : 30266.52 MAPE :0.0972"
+    # [1] "Iteration : 10 RMSE : 22727.11 MAPE :0.0903"
+    # [1] "Mape Mean - 0.0920777304886837Mape Variance - 9.64794842597865e-05"
+  }#Results
+  
+  #Kaggle submission - 
+  PREDICTIONS <- predict(XGB_K, data.matrix(HP.TOTAL.IMPUTE.ENC.TEST))
+  submission  <- cbind(test$Id, PREDICTIONS)
+  colnames(submission)   <- c("Id", "SalePrice")
+  write.csv(submission, "170728_HP_ITER3.csv", row.names = F)  
+  #Rank - 1106, score - 0.14354
+  
+  #Dimensionality reduction
+  #Variable importance plots
+  NAMES = dimnames(data.matrix(HP.TOTAL.IMPUTE.ENC.TRAIN.3[,!(colnames(HP.TOTAL.IMPUTE.ENC.TRAIN.3) %in% c("ID","SalePrice"))]))[[2]]
+  IMPORTANCE.MATRIX <- xgb.importance(NAMES, XGB_1)
+  xgb.plot.importance(IMPORTANCE.MATRIX)
+  #View(IMPORTANCE.MATRIX)
+  IMPORTANCE.MATRIX$Cumulativeimportance <- cumsum(IMPORTANCE.MATRIX$Importance)
+  IMPORTANT_COLS <- IMPORTANCE.MATRIX$Feature[IMPORTANCE.MATRIX$Cumulativeimportance <= 0.99]
+  #Filter train data to include important columns only
+  HP.TOTAL.IMPUTE.ENC.TRAIN <- HP.TOTAL.IMPUTE.ENC.TRAIN[, (colnames(HP.TOTAL.IMPUTE.ENC.TRAIN) %in% c("Id", "SalePrice") |
+                                                              colnames(HP.TOTAL.IMPUTE.ENC.TRAIN) %in% IMPORTANT_COLS)]
+  #Run k - fold
+  {
+    # [1] "Iteration : 1 RMSE : 24156.57 MAPE :0.0941"
+    # [1] "Iteration : 2 RMSE : 38015.3 MAPE :0.0953"
+    # [1] "Iteration : 3 RMSE : 20293 MAPE :0.0857"
+    # [1] "Iteration : 4 RMSE : 27819.78 MAPE :0.1006"
+    # [1] "Iteration : 5 RMSE : 26140.36 MAPE :0.0842"
+    # [1] "Iteration : 6 RMSE : 26749.81 MAPE :0.0952"
+    # [1] "Iteration : 7 RMSE : 39662.84 MAPE :0.107"
+    # [1] "Iteration : 8 RMSE : 22718.63 MAPE :0.0746"
+    # [1] "Iteration : 9 RMSE : 32091.84 MAPE :0.1034"
+    # [1] "Iteration : 10 RMSE : 22389.62 MAPE :0.0931"
+    # [1] "Mape Mean - 0.0933141651543844Mape Variance - 9.36939581821811e-05"
+  }#Results
+  
+  #Kaggle submission
+  HP.TOTAL.IMPUTE.ENC.TEST <- HP.TOTAL.IMPUTE.ENC.TEST[, colnames(HP.TOTAL.IMPUTE.ENC.TEST) %in% IMPORTANT_COLS]
+  PREDICTIONS <- predict(XGB_K, data.matrix(HP.TOTAL.IMPUTE.ENC.TEST))
+  submission  <- cbind(test$Id, PREDICTIONS)
+  colnames(submission)   <- c("Id", "SalePrice")
+  write.csv(submission, "170802_HP_ITER6.csv", row.names = F)  
+  #Rank - 1085, score - 0.14166
+  
+  #ITER5 & ITER6 : POST HYPERTUNING
+  {
+    # max_depth = 5
+    # nround = 2000
+    # [1] "Iteration : 1 RMSE : 24447.37 MAPE :0.0882"
+    # [1] "Iteration : 2 RMSE : 37202.36 MAPE :0.0941"
+    # [1] "Iteration : 3 RMSE : 19639.95 MAPE :0.0835"
+    # [1] "Iteration : 4 RMSE : 27586.63 MAPE :0.1015"
+    # [1] "Iteration : 5 RMSE : 25439.13 MAPE :0.0783"
+    # [1] "Iteration : 6 RMSE : 27098.71 MAPE :0.0939"
+    # [1] "Iteration : 7 RMSE : 42621.54 MAPE :0.1046"
+    # [1] "Iteration : 8 RMSE : 21860.38 MAPE :0.0725"
+    # [1] "Iteration : 9 RMSE : 30142.59 MAPE :0.0981"
+    # [1] "Iteration : 10 RMSE : 22181.74 MAPE :0.0873"
+    # [1] "Mape Mean - 0.0902096715778628Mape Variance - 0.000104226211124394"
+    
+    # For imprtant variables only
+    # [1] "Iteration : 1 RMSE : 23865.85 MAPE :0.0926"
+    # [1] "Iteration : 2 RMSE : 36693.86 MAPE :0.0912"
+    # [1] "Iteration : 3 RMSE : 19529.62 MAPE :0.0832"
+    # [1] "Iteration : 4 RMSE : 27257.78 MAPE :0.101"
+    # [1] "Iteration : 5 RMSE : 24664.5 MAPE :0.0806"
+    # [1] "Iteration : 6 RMSE : 27475.55 MAPE :0.0947"
+    # [1] "Iteration : 7 RMSE : 40202.67 MAPE :0.1028"
+    # [1] "Iteration : 8 RMSE : 22229.28 MAPE :0.0712"
+    # [1] "Iteration : 9 RMSE : 31728.74 MAPE :0.0999"
+    # [1] "Iteration : 10 RMSE : 22750.27 MAPE :0.0925"
+    # [1] "Mape Mean - 0.0909662114671549Mape Variance - 9.94689592106002e-05"
+    
+    #Model overfitting on validation sets??
+  }
     
 }#07. Modelling technique - XGBoost
+{
+  
+}#08. Feature engineering
