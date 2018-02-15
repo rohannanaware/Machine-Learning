@@ -1,0 +1,1310 @@
+#Author : Rohan M. Nanaware
+#Purpose: Predict the drivers most likely to claim insurance - Will feed into setting fair premium amount accounting propensity to claim
+#Date C.: 09th Feb 2018
+#Date M.: 14th Feb 2018
+#Updates:
+{
+  #09th Feb 2018 - Module 01, 02, 03, 04, 05
+  #14th Feb 2018 - Module 00, 01, 06, 07
+  #15th Feb 2018 - Module 00, 08
+}
+
+
+{
+  #mutute_at - mutate a group of columns
+  #http://dplyr.tidyverse.org/reference/summarise_all.html
+  #vars - This helper is intended to provide equivalent semantics to select(). It is used for instance in scoped summarising and mutating verbs (mutate_at() and summarise_at()).
+  #https://www.rdocumentation.org/packages/dplyr/versions/0.7.3/topics/vars
+  #count - counts the number of occurences
+  #https://www.rdocumentation.org/packages/plyr/versions/1.8.4/topics/count
+  #spread - cast dataframe by a key value pair
+  #https://www.rdocumentation.org/packages/tidyr/versions/0.8.0/topics/spread
+  #binom.test - need to read more - Performs an exact test of a simple null hypothesis about the probability of success in a Bernoulli experiment
+  #https://en.wikipedia.org/wiki/Binomial_test
+}#00. Reference
+{
+  # general visualisation
+  library('ggplot2') # visualisation
+  library('scales') # visualisation
+  library('grid') # visualisation
+  library('ggthemes') # visualisation
+  library('gridExtra') # visualisation
+  library('RColorBrewer') # visualisation
+  library('corrplot') # visualisation
+  
+  # general data manipulation
+  library('dplyr') # data manipulation
+  library('readr') # input/output
+  library('data.table') # data manipulation
+  library('tibble') # data wrangling
+  library('tidyr') # data wrangling
+  library('stringr') # string manipulation
+  library('forcats') # factor manipulation
+  library('rlang') # data manipulation
+  
+  # specific visualisation
+  library('alluvial') # visualisation
+  library('ggfortify') # visualisation
+  library('ggrepel') # visualisation
+  library('ggridges') # visualisation
+  library('VIM') # NAs
+  library('plotly') # interactive
+  library('ggforce') # visualisation
+  
+  # modelling
+  library('xgboost') # modelling
+  library('caret') # modelling
+  library('MLmetrics') # gini metric
+  
+  #install.packages("tibble", dependencies = T)
+  library(tibble)
+  
+}#01. Import required libraries
+{
+  # Define multiple plot function
+  #
+  # ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+  # - cols:   Number of columns in layout
+  # - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+  #
+  # If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+  # then plot 1 will go in the upper left, 2 will go in the upper right, and
+  # 3 will go all the way across the bottom.
+  #
+  multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+    
+    # Make a list from the ... arguments and plotlist
+    plots <- c(list(...), plotlist)
+    
+    numPlots = length(plots)
+    
+    # If layout is NULL, then use 'cols' to determine layout
+    if (is.null(layout)) {
+      # Make the panel
+      # ncol: Number of columns of plots
+      # nrow: Number of rows needed, calculated from # of cols
+      layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                       ncol = cols, nrow = ceiling(numPlots/cols))
+    }
+    
+    if (numPlots==1) {
+      print(plots[[1]])
+      
+    } else {
+      # Set up the page
+      grid.newpage()
+      pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+      
+      # Make each plot, in the correct location
+      for (i in 1:numPlots) {
+        # Get the i,j matrix positions of the regions that contain this subplot
+        matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+        
+        print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                        layout.pos.col = matchidx$col))
+      }
+    }
+  }
+  
+  # function to extract binomial confidence levels
+  get_binCI <- function(x,n) as.list(setNames(binom.test(x,n)$conf.int, c("lwr", "upr")))
+  
+  ipak <- function(pkg){
+    new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+    if (length(new.pkg)) 
+      install.packages(new.pkg, dependencies = TRUE)
+    sapply(pkg, require, character.only = TRUE)
+  }
+}#02. Load helper functions
+{
+  wd <- "E:/Delivery/1 Active/Kaggle/Competitions/Porto Seguro Safe Driver Prediction"
+  setwd(wd)
+}#03. Set working directory
+{
+  train <- as.tibble(fread("train.csv", header = T, stringsAsFactors = F, na.strings = c("-1","-1.0")))
+  test <- as.tibble(fread("test.csv", header = T, stringsAsFactors = F, na.strings = c("-1","-1.0")))
+}#04. Import data
+{
+  {
+    unique(train$ ps_ind_17_bin)
+    min_ <- sapply(train, function(x) min(x, na.rm = T))#-1.0, update condition in import to handle NAs
+    sapply(train, function(x) sum(is.na(x)))
+    sapply(train, function(x) length(unique(x)))
+    sapply(test, function(x) sum(is.na(x)))
+  }
+    
+  #dataset summary
+  summary(train)
+  summary(test)
+  #na count
+  sum(is.na(train))
+  sum(is.na(test))
+
+}#05. Input data checks
+{
+  
+  train <- train %>%
+    mutate_at(vars(ends_with("cat")), funs(factor)) %>%
+    mutate_at(vars(ends_with("bin")), funs(as.logical)) %>%
+    mutate(target = as.factor(target))
+  
+  test <- test %>%
+    mutate_at(vars(ends_with("cat")), funs(factor)) %>%
+    mutate_at(vars(ends_with("bin")), funs(as.logical))
+
+  combine <- bind_rows(train %>% mutate(dset = "train"),
+                       test %>% mutate(dset = "test", 
+                                       target = NA))
+  combine <- combine %>%
+    mutate(dset = factor(dset))
+  
+}#06. Feature reformating and dataset combination
+{
+  {
+    p1 <- train %>%
+      ggplot(aes(ps_ind_06_bin, fill = ps_ind_06_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      ggplot(aes(ps_ind_07_bin, fill = ps_ind_07_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      ggplot(aes(ps_ind_08_bin, fill = ps_ind_08_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      ggplot(aes(ps_ind_09_bin, fill = ps_ind_09_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p5 <- train %>%
+      ggplot(aes(ps_ind_10_bin, fill = ps_ind_10_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p6 <- train %>%
+      ggplot(aes(ps_ind_11_bin, fill = ps_ind_11_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p7 <- train %>%
+      ggplot(aes(ps_ind_12_bin, fill = ps_ind_12_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p8 <- train %>%
+      ggplot(aes(ps_ind_13_bin, fill = ps_ind_13_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    layout <- matrix(c(1,2,3,4,5,6,7,8),2,4,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, p7, p8, layout=layout)
+    #We find that some of the binary features are very unbalanced; 
+    #   with “FALSE” accounting for the vast majority of cases. 
+    #   This is particularly true for the ps_ind sequence from “10” to “13”.
+  }#Binary features part 1
+  {
+    p1 <- train %>%
+      ggplot(aes(ps_ind_16_bin, fill = ps_ind_16_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      ggplot(aes(ps_ind_17_bin, fill = ps_ind_17_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      ggplot(aes(ps_ind_18_bin, fill = ps_ind_18_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      ggplot(aes(ps_calc_15_bin, fill = ps_calc_15_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p5 <- train %>%
+      ggplot(aes(ps_calc_16_bin, fill = ps_calc_16_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p6 <- train %>%
+      ggplot(aes(ps_calc_17_bin, fill = ps_calc_17_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p7 <- train %>%
+      ggplot(aes(ps_calc_18_bin, fill = ps_calc_18_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p8 <- train %>%
+      ggplot(aes(ps_calc_19_bin, fill = ps_calc_19_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p9 <- train %>%
+      ggplot(aes(ps_calc_20_bin, fill = ps_calc_20_bin)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    layout <- matrix(c(1,2,3,4,5,6,7,8,9,9),2,5,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, layout=layout)
+    #We find that in this particular set of binary features we have more of a balance 
+    #   between “TRUE” and “FALSE”. For the three features ps_ind_16_bin, ps_calc_16_bin, 
+    #   and ps_calc_17_bin we find that the “TRUE” values are in fact dominating.
+  }#Binary features part 2
+  {
+    p1 <- train %>%
+      ggplot(aes(ps_ind_02_cat, fill = ps_ind_02_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      ggplot(aes(ps_ind_04_cat, fill = ps_ind_04_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      ggplot(aes(ps_ind_05_cat, fill = ps_ind_05_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      ggplot(aes(ps_car_01_cat, fill = ps_car_01_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p5 <- train %>%
+      ggplot(aes(ps_car_02_cat, fill = ps_car_02_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p6 <- train %>%
+      ggplot(aes(ps_car_03_cat, fill = ps_car_03_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    layout <- matrix(c(1,2,3,4,5,6),3,2,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, layout=layout)
+    #We find that some categorical features have only very few levels, 
+    #   down to 2 levels (+ NA) for three of them. In others we have up to 11 levels, 
+    #   some of which are clearly dominating the (logarithmic) plots.
+  }#Categorical features part 1
+  {
+    p1 <- train %>%
+      ggplot(aes(ps_car_04_cat, fill = ps_car_04_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      ggplot(aes(ps_car_05_cat, fill = ps_car_05_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      ggplot(aes(ps_car_06_cat, fill = ps_car_06_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      ggplot(aes(ps_car_07_cat, fill = ps_car_07_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p5 <- train %>%
+      ggplot(aes(ps_car_08_cat, fill = ps_car_08_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p6 <- train %>%
+      ggplot(aes(ps_car_09_cat, fill = ps_car_09_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p7 <- train %>%
+      ggplot(aes(ps_car_10_cat, fill = ps_car_10_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p8 <- train %>%
+      ggplot(aes(ps_car_11_cat, fill = ps_car_11_cat)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    layout <- matrix(c(1,1,2,3,4,4,5,5,6,6,7,7,8,8,8,8),4,4,byrow=TRUE)
+    multiplot(p1, p2, p4, p3, p5, p6, p7, p8, layout=layout)
+    #We find that also here the number of levels is mostly low. 
+    #   Recall that the car features are related to the automobile itself. 
+    #   Feature “11” has lots of levels. This is the one number shared by a (supposedly) 
+    #   categorical and an integer feature. Maybe there has been a mixup in naming these 
+    #   features?
+  }#Categorical features part 2
+  {
+    p1 <- train %>%
+      mutate(ps_ind_01 = as.factor(ps_ind_01)) %>%
+      ggplot(aes(ps_ind_01, fill = ps_ind_01)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      mutate(ps_ind_03 = as.factor(ps_ind_03)) %>%
+      ggplot(aes(ps_ind_03, fill = ps_ind_03)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      mutate(ps_ind_14 = as.factor(ps_ind_14)) %>%
+      ggplot(aes(ps_ind_14, fill = ps_ind_14)) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      mutate(ps_ind_15 = as.factor(ps_ind_15)) %>%
+      ggplot(aes(ps_ind_15, fill = ps_ind_15)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p5 <- train %>%
+      mutate(ps_car_11 = as.factor(ps_car_11)) %>%
+      ggplot(aes(ps_car_11, fill = ps_car_11)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    
+    layout <- matrix(c(1,1,2,2,3,4,4,5),2,4,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, layout=layout)
+    
+    #We find that again there are large differences in frequencies, in particular 
+    #   for ps_ind_14 and ps_car_11 where “0” and “3” are the dominating values, 
+    #   respectively.
+  }#Integer features part 1:"ind" and "car"
+  {
+    p1 <- train %>%
+      mutate(ps_calc_04 = as.factor(ps_calc_04)) %>%
+      ggplot(aes(ps_calc_04, fill = ps_calc_04)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      mutate(ps_calc_05 = as.factor(ps_calc_05)) %>%
+      ggplot(aes(ps_calc_05, fill = ps_calc_05)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      mutate(ps_calc_06 = as.factor(ps_calc_06)) %>%
+      ggplot(aes(ps_calc_06, fill = ps_calc_06)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      mutate(ps_calc_07 = as.factor(ps_calc_07)) %>%
+      ggplot(aes(ps_calc_07, fill = ps_calc_07)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p5 <- train %>%
+      mutate(ps_calc_08 = as.factor(ps_calc_08)) %>%
+      ggplot(aes(ps_calc_08, fill = ps_calc_08)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p6 <- train %>%
+      mutate(ps_calc_09 = as.factor(ps_calc_09)) %>%
+      ggplot(aes(ps_calc_09, fill = ps_calc_09)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p7 <- train %>%
+      ggplot(aes(ps_calc_10, fill = ps_calc_10)) +
+      geom_histogram(fill = "blue", binwidth = 1) +
+      theme(legend.position = "none")
+    
+    p8 <- train %>%
+      ggplot(aes(ps_calc_11, fill = ps_calc_11)) +
+      geom_histogram(fill = "blue", binwidth = 1) +
+      theme(legend.position = "none")
+    
+    p9 <- train %>%
+      mutate(ps_calc_12 = as.factor(ps_calc_12)) %>%
+      ggplot(aes(ps_calc_12, fill = ps_calc_12)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p10 <- train %>%
+      mutate(ps_calc_13 = as.factor(ps_calc_13)) %>%
+      ggplot(aes(ps_calc_13, fill = ps_calc_13)) +
+      geom_bar() +
+      theme(legend.position = "none")
+    
+    p11 <- train %>%
+      ggplot(aes(ps_calc_14, fill = ps_calc_14)) +
+      geom_histogram(fill = "blue", binwidth = 1) +
+      theme(legend.position = "none")
+    
+    layout <- matrix(c(1,2,3,4,5,6,7,8,9,10,11,11),3,4,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, layout=layout)
+    #We find that the histogram features “10”, “11”, and “14” have close to normal 
+    #   looking distributions with possibly more pronounced tails towards larger values. 
+    #   The other features are not far from a normal or log-normal distribution either and 
+    #   consequently display significant ranges in frequency.
+  }#Integer features part 2:"calc
+  {
+    p1 <- train %>%
+      ggplot(aes(ps_reg_01, fill = ps_reg_01)) +
+      geom_histogram(fill = "dark green", binwidth = 0.1) +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      ggplot(aes(ps_reg_02, fill = ps_reg_02)) +
+      geom_histogram(fill = "dark green", binwidth = 0.1) +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      ggplot(aes(ps_reg_03, fill = ps_reg_03)) +
+      geom_histogram(fill = "dark green", binwidth = 0.1) +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      ggplot(aes(ps_calc_01, fill = ps_calc_01)) +
+      geom_histogram(fill = "blue", binwidth = 0.1) +
+      theme(legend.position = "none")
+    
+    p5 <- train %>%
+      ggplot(aes(ps_calc_02, fill = ps_calc_02)) +
+      geom_histogram(fill = "blue", binwidth = 0.1) +
+      theme(legend.position = "none")
+    
+    p6 <- train %>%
+      ggplot(aes(ps_calc_03, fill = ps_calc_03)) +
+      geom_histogram(fill = "blue", binwidth = 0.1) +
+      theme(legend.position = "none")
+    
+    
+    
+    layout <- matrix(c(1,2,3,4,5,6),2,3,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, layout=layout)
+    #We find that while the (green) “reg” features show distributions that are clearly 
+    #   skewed toward a prominent peak, the (blue) “calc” features appear to be pretty 
+    #   uniformly distributed.
+  }#Float features part 1:"reg" and "calc
+  {
+    p1 <- train %>%
+      ggplot(aes(ps_car_12, fill = ps_car_12)) +
+      geom_histogram(fill = "red", binwidth = 0.05) +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      ggplot(aes(ps_car_13, fill = ps_car_13)) +
+      geom_histogram(fill = "red", binwidth = 0.1) +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      ggplot(aes(ps_car_14, fill = ps_car_14)) +
+      geom_histogram(fill = "red", binwidth = 0.01) +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      ggplot(aes(ps_car_15, fill = ps_car_15)) +
+      geom_histogram(fill = "red", binwidth = 0.1) +
+      theme(legend.position = "none")
+    
+    layout <- matrix(c(1,2,3,4),2,2,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, layout=layout)
+    #We find that the two features on the left show interesting sub-structure in their distributions, while ps_car_15 appears to take only quite distinct values until after ps_car_15 == 3when the gaps decrease notably.
+  }#Float features part 2:"car"
+  {
+    train %>%
+      ggplot(aes(target, fill = target)) + 
+      geom_bar() + 
+      theme(legend.position = "none")
+    #With less than 4% of policy holders filing a claim the problem is heavily imbalanced.
+  }#Target variable
+  {
+    train %>%
+      select(which(colMeans(is.na(.)) > 0)) %>%
+      aggr(prop = FALSE, combined = TRUE, numbers = TRUE, bars = FALSE, cex.axis = 0.7)
+    # We find:
+    #   
+    #   The features ps_car_03_cat and ps_car_05_cat have the largest number of NAs. They also share numerous instances where NAs occur in both of them for the same row.
+    # 
+    # There are features that share a lot of NA rows with other features, for instance ps_reg_03. Others are exclusive, like ps_car_12, or almost exclusive like ps_car_11 or *ps_car_02.cat.
+    # 
+    # About 2.5% of values are missing in total in eacho of the train and test data sets:
+    sum(is.na(train))/(nrow(train)*ncol(train))*100
+    sum(is.na(test))/(nrow(test)*ncol(test))*100
+    
+  }#More details on missing values
+
+}#07. Feature distribution
+{
+  {
+    p1 <- train %>%
+      group_by(ps_ind_16_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_16_bin, frac_claim, fill = ps_ind_16_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p2 <- train %>%
+      group_by(ps_ind_17_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_17_bin, frac_claim, fill = ps_ind_17_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p3 <- train %>%
+      group_by(ps_ind_18_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_18_bin, frac_claim, fill = ps_ind_18_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p4 <- train %>%
+      group_by(ps_calc_15_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_15_bin, frac_claim, fill = ps_calc_15_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p5 <- train %>%
+      group_by(ps_calc_16_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_16_bin, frac_claim, fill = ps_calc_16_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p6 <- train %>%
+      group_by(ps_calc_17_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_17_bin, frac_claim, fill = ps_calc_17_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p7 <- train %>%
+      group_by(ps_calc_18_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_18_bin, frac_claim, fill = ps_calc_18_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p8 <- train %>%
+      group_by(ps_calc_19_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_19_bin, frac_claim, fill = ps_calc_19_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p9 <- train %>%
+      group_by(ps_calc_20_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_20_bin, frac_claim, fill = ps_calc_20_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    layout <- matrix(c(1,2,3,4,5,6,7,8,9,9),2,5,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, layout=layout)
+    # We find that the 2nd part of the binary features have much smaller, statistically insignificant differences in claim rate on average. The only exceptions are ps_ind_16_bin and ps_ind_17_bin which are significant
+  }#Binary features 2
+  {
+    p1 <- train %>%
+      group_by(ps_ind_06_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_06_bin, frac_claim, fill = ps_ind_06_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p2 <- train %>%
+      group_by(ps_ind_07_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_07_bin, frac_claim, fill = ps_ind_07_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p3 <- train %>%
+      group_by(ps_ind_08_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_08_bin, frac_claim, fill = ps_ind_08_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p4 <- train %>%
+      group_by(ps_ind_09_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_09_bin, frac_claim, fill = ps_ind_09_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p5 <- train %>%
+      group_by(ps_ind_10_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_10_bin, frac_claim, fill = ps_ind_10_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p6 <- train %>%
+      group_by(ps_ind_11_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_11_bin, frac_claim, fill = ps_ind_11_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p7 <- train %>%
+      group_by(ps_ind_12_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_12_bin, frac_claim, fill = ps_ind_12_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    p8 <- train %>%
+      group_by(ps_ind_13_bin, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_13_bin, frac_claim, fill = ps_ind_13_bin)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(y = "Claims [%]")
+    
+    layout <- matrix(c(1,2,3,4,5,6,7,8),2,4,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, p7, p8, layout=layout)
+    # We find that the first batch of binary features has significant differences in the claim fractions especially for the 4 top panels. There are differences in the bottom panels but they are much less significant.
+  }#Binary features 1
+  {
+    p1 <- train %>%
+      group_by(ps_ind_02_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_ind_02_cat, -frac_claim, FUN = max), frac_claim, fill = ps_ind_02_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_ind_02_cat", y = "Claims [%]")
+    
+    p2 <- train %>%
+      group_by(ps_ind_04_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_ind_04_cat, -frac_claim, FUN = max), frac_claim, fill = ps_ind_04_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_ind_04_cat", y = "Claims [%]")
+    
+    p3 <- train %>%
+      group_by(ps_ind_05_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_ind_05_cat, -frac_claim, FUN = max), frac_claim, fill = ps_ind_05_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_ind_05_cat", y = "Claims [%]")
+    
+    p4 <- train %>%
+      group_by(ps_car_01_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_01_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_01_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_01_cat", y = "Claims [%]")
+    
+    p5 <- train %>%
+      group_by(ps_car_02_cat, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_02_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_02_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_02_cat", y = "Claims [%]")
+    
+    p6 <- train %>%
+      group_by(ps_car_03_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_03_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_03_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_03_cat", y = "Claims [%]")
+    
+    layout <- matrix(c(1,2,3,4,5,6),3,2,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, layout=layout)
+    # We find that interestingly enough there appears to be a correlation with the claims rate and whether a certain feature is existing; as evidenced by the high fractions among the NAs for most features. Besides this strong effect there might by a more suble dependence on ps_ind_05_cat especially in “2” vs “0”.
+  }#Categorical features 1
+  {
+    p1 <- train %>%
+      group_by(ps_car_04_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_04_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_04_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_04_cat", y = "Claims [%]")
+    
+    p2 <- train %>%
+      group_by(ps_car_05_cat, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_05_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_05_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_05_cat", y = "Claims [%]")
+    
+    p3 <- train %>%
+      group_by(ps_car_06_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_06_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_06_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_06_cat", y = "Claims [%]")
+    
+    p4 <- train %>%
+      group_by(ps_car_07_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_07_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_07_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_07_cat", y = "Claims [%]")
+    
+    p5 <- train %>%
+      group_by(ps_car_08_cat, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_08_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_08_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_08_cat", y = "Claims [%]")
+    
+    p6 <- train %>%
+      group_by(ps_car_09_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_09_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_09_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_09_cat", y = "Claims [%]")
+    
+    p7 <- train %>%
+      group_by(ps_car_10_cat, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_10_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_10_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_10_cat", y = "Claims [%]")
+    
+    p8 <- train %>%
+      group_by(ps_car_11_cat, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(reorder(ps_car_11_cat, -frac_claim, FUN = max), frac_claim, fill = ps_car_11_cat)) +
+      geom_col() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_11_cat", y = "Claims [%]")
+    
+    layout <- matrix(c(1,1,2,3,4,4,5,5,6,6,7,7,8,8,8,8),4,4,byrow=TRUE)
+    multiplot(p1, p2, p4, p3, p5, p6, p7, p8, layout=layout)
+    # We find that the second batch of categorical features also shows a few interesting features, such as ps_car_06_cat whereas other (like “10”) don’t seem to be related to the claims rate at all. We notice again that “11_cat” has far more levels than any other categorical feature
+  }#Categorical features 2
+  {
+    p1 <- train %>%
+      group_by(ps_ind_01, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_01, frac_claim)) +
+      geom_point(color = "orange") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "orange") +
+      theme(legend.position = "none") +
+      labs(x = "ps_ind_01", y = "Claims [%]")
+    
+    p2 <- train %>%
+      group_by(ps_ind_03, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_03, frac_claim)) +
+      geom_point(color = "orange") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "orange") +
+      theme(legend.position = "none") +
+      labs(x = "ps_ind_03", y = "Claims [%]")
+    
+    p3 <- train %>%
+      group_by(ps_ind_14, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_14, frac_claim)) +
+      geom_point(color = "orange") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "orange") +
+      theme(legend.position = "none") +
+      labs(x = "ps_ind_14", y = "Claims [%]")
+    
+    p4 <- train %>%
+      group_by(ps_ind_15, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_ind_15, frac_claim)) +
+      geom_point(color = "orange") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "orange") +
+      theme(legend.position = "none") +
+      labs(x = "ps_ind_15", y = "Claims [%]")
+    
+    p5 <- train %>%
+      filter(!is.na(ps_car_11)) %>%
+      group_by(ps_car_11, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_car_11, frac_claim)) +
+      geom_point(color = "red") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "red") +
+      theme(legend.position = "none") +
+      labs(x = "ps_car_11", y = "Claims [%]")
+    
+    layout <- matrix(c(1,1,2,2,3,4,4,5),2,4,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, layout=layout)
+    # We find:
+    #   
+    #   These variables show much more significant signal in their claim rates in the range of 2-3 percentage points.
+    # 
+    # ps_ind_03 and ps_car_11 have notable drops in claim number from their maxima which are both at zero.
+    # 
+    # The claims fraction for ps_ind_01 has an increasing trend, wherease ps_ind_15 is almost monotonically decreasing.
+    # 
+    # Note, that here we removed the NAs from the ps_car_11 feature, because they are only 5 values (with zero claims) and would make the plot much harder to read.
+  }#Integer features 1
+  {
+    p1 <- train %>%
+      group_by(ps_calc_04, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_04, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "ps_calc_04", y = "Claims [%]")
+    
+    p2 <- train %>%
+      filter(ps_calc_05 < 6) %>%
+      group_by(ps_calc_05, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_05, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "ps_calc_05", y = "Claims [%]")
+    
+    p3 <- train %>%
+      filter(ps_calc_06 > 2) %>%
+      group_by(ps_calc_06, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_06, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "ps_calc_06", y = "Claims [%]")
+    
+    p4 <- train %>%
+      filter(ps_calc_07 < 8) %>%
+      group_by(ps_calc_07, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_07, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "ps_calc_07", y = "Claims [%]")
+    
+    p5 <- train %>%
+      filter(ps_calc_08 > 2) %>%
+      group_by(ps_calc_08, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_08, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "ps_calc_08", y = "Claims [%]")
+    
+    p6 <- train %>%
+      group_by(ps_calc_09, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_09, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "ps_calc_09", y = "Claims [%]")
+    
+    p7 <- train %>%
+      ggplot(aes(ps_calc_10, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.4) +
+      theme(legend.position = "none")
+    
+    p8 <- train %>%
+      ggplot(aes(ps_calc_11, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.4) +
+      theme(legend.position = "none")
+    
+    p9 <- train %>%
+      filter(ps_calc_12 < 9) %>%
+      group_by(ps_calc_12, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_12, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "ps_calc_12", y = "Claims [%]")
+    
+    p10 <- train %>%
+      filter(ps_calc_13 < 12) %>%
+      group_by(ps_calc_13, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ggplot(aes(ps_calc_13, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "ps_calc_13", y = "Claims [%]")
+    
+    p11 <- train %>%
+      ggplot(aes(ps_calc_14, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.4)
+    
+    layout <- matrix(c(1,2,3,4,5,6,7,8,9,10,11,11),3,4,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, layout=layout)
+    # We find:
+    #   
+    #   There is no statistically significant signal in the scatter plots. All error bars overlap in each plot and the slight wiggles that we see might very well just be random variation.
+    # 
+    # The density plots show no difference either. Each plot uses two overlapping colours with alpha blending, as shown in the legend on the bottom right, but you only see the blended result because the overlap is practically perfect.
+  }#Integer features 2
+  {
+    p1 <- train %>%
+      ggplot(aes(ps_reg_01, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      ggplot(aes(ps_reg_02, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      ggplot(aes(ps_reg_03, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      ggplot(aes(ps_calc_01, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p5 <- train %>%
+      ggplot(aes(ps_calc_02, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p6 <- train %>%
+      ggplot(aes(ps_calc_03, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05)
+    
+    layout <- matrix(c(1,2,3,4,5,6),2,3,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, layout=layout)
+    # We find:
+    #   
+    #   There are small but notable differences in the reg features, which are related to the region of the policy holder. Lower region values appear to show a lower number of claims on average.
+    # 
+    # The essentially uniform ps_calc_01 - ps_calc_03 features show almost perfect overlap. There might be some small differences but they could well be random.
+  }#Float features 1
+  {
+    p1 <- train %>%
+      ggplot(aes(ps_car_12, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p2 <- train %>%
+      ggplot(aes(ps_car_13, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p3 <- train %>%
+      ggplot(aes(ps_car_14, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p4 <- train %>%
+      ggplot(aes(ps_car_15, fill = target)) +
+      geom_density(alpha = 0.5, bw = 0.1) +
+      theme(legend.position = "none")
+    
+    layout <- matrix(c(1,2,3,4),2,2,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, layout=layout)
+    # We find that the float car features also show small deviations towards higher numbers having more claims. While the effects might well be statistically significant their practical impact could be small.
+  }#Float features 2
+  {
+    # In terms of the impact of the target on the individual features we clearly see strong differences in claim rates within and between the different groups. Some of the binary features show significant effects in the range of 1-2 percentage points, whereas others are show no practical impact. Specifically, most “ind” features have a clear influence claims whereas the calc binary features are neutral. The same appears to be true for the calc integer and floating point features; suggesting that the calc group in general is not of immediate usefulness for our prediction goal.
+    # 
+    # The strongest impact on claim rates is shown by the categorical and integer features; in particular the “ind” and “car” variables which can vary in the range of 2-3 percentage points. The effect on the floating point features is much more subtle, but might prove useful in getting the best prediction out of this data.
+  }#Summary
+  
+}#08. Claim rates for individual features
