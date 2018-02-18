@@ -8,8 +8,6 @@
   #14th Feb 2018 - Module 00, 01, 06, 07
   #15th Feb 2018 - Module 00, 08
 }
-
-
 {
   #mutute_at - mutate a group of columns
   #http://dplyr.tidyverse.org/reference/summarise_all.html
@@ -1308,3 +1306,99 @@
   }#Summary
   
 }#08. Claim rates for individual features
+{
+  # After studying each feature individually we will now start to look at interactions between them. The annoymity of the features will make it more difficult to interpret these relations. However, they will still be useful for our prediction goal and for gaining a more detailed understanding of our data.
+  {
+    train %>%
+      select(-starts_with("ps_calc"), -ps_ind_10_bin, -ps_ind_11_bin, -ps_car_10_cat, -id) %>%
+      mutate_at(vars(ends_with("cat")), funs(as.integer)) %>%
+      mutate_at(vars(ends_with("bin")), funs(as.integer)) %>%
+      mutate(target = as.integer(target)) %>%
+      cor(use="complete.obs", method = "spearman") %>%
+      corrplot(type="lower", tl.col = "black",  diag=FALSE)
+    # In this kind of plot we want to look for the bright, large circles which immediately show the strong correlations (size and shading depends on the absolute values of the coefficients; colour depends on direction). Anything that you would have to squint to see is usually not worth seeing.
+    # 
+    # We find:
+    #   
+    #   Most features appear to be primarily correlated with others in their group. We can see this by studying the upper right region near where the diagonal would be and comparing it to the lower left area of the plot.
+    # 
+    # There is no obvious correlation with the target feature in the left-most column. This could be caused by the sparsity of the target == 1 values.
+  }#Correlation overview
+  {
+    # Here we plot only the moderately to highly correlated features by showing their correlation coefficients directly:
+    train %>%
+      select(ps_ind_12_bin, ps_ind_14, ps_ind_16_bin, ps_ind_17_bin, ps_ind_18_bin, ps_reg_02,
+             ps_reg_03, ps_car_12, ps_car_13, ps_car_14, ps_car_15, ps_car_02_cat, ps_car_04_cat) %>%
+      mutate_at(vars(ends_with("cat")), funs(as.integer)) %>%
+      mutate_at(vars(ends_with("bin")), funs(as.integer)) %>%
+      cor(use="complete.obs", method = "spearman") %>%
+      corrplot(type="lower", tl.col = "black",  diag=FALSE, method = "number")
+    # We find:
+    #   
+    #   There is a very strong correlation between ps_ind_12_bin and ps_ind_14, which is an ordinal integer feature with 5 levels. Other correlations that exist are weaker but still notable.
+    # 
+    # The correlation between the “reg” and “car” features, respectively, shows how continuous variables are related. In particular ps_car_14, which showed only a small effect in the individual plots, might be interesting here.
+    # 
+    # The anti-correlations are generally not as strong, with ps_ind_16_bin and ps_ind_18_bin accounting for the strongest coefficient with -0.58.
+  }#Correlation view of highly correlated features
+  {
+    # For a different kind of visualisation of multi-feature interaction we can use an alluvial plot. Made available through the alluvial package, those plots are a kind of mix between a flow chart and a bar plot and they show how the target categories relate to various discrete features. Here we pick a subset of the more strongly correlated features we had identified in the previous plot:
+    allu_train <- train %>%
+      filter(!is.na(ps_car_02_cat)) %>%
+      filter(ps_car_04_cat %in% c("0","1","2","8","9")) %>%
+      group_by(target, ps_ind_17_bin, ps_ind_18_bin, ps_car_02_cat, ps_car_04_cat) %>%
+      count() %>%
+      ungroup
+    
+    alluvial(allu_train %>% select(-n),
+             freq=allu_train$n, border=NA,
+             col=ifelse(allu_train$target == 0, "red", "blue"),
+             cex=0.75,
+             hide = allu_train$n < 200,
+             ordering = list(
+               order(allu_train$target==1),
+               NULL,
+               NULL,
+               NULL,
+               NULL))
+    # In this plot, the vertical sizes of the blocks and the widths of the stripes (called “alluvia”) are proportional to the frequency. We decided to hide the alluvia with the lowest frequencies using the parameter of the same name. Within a category block you can re-order the vertical layering of the alluvia to emphasise certain aspects of your data set.
+    # 
+    # We see nicely how the small proportion of positive target values (on the upper left) contributes to the make up of the different features. The dominating binary feature values can clearly be seen to carry an approximately proportional amount of claims. Feel free to fork this plot to explore the composition of other features.
+  }#Alluvial diagram for key features
+  {
+    {
+      p1 <- train %>%
+        ggplot(aes(ps_ind_14, fill = ps_ind_12_bin)) +
+        geom_bar(position = "fill")
+      
+      p2 <- train %>%
+        ggplot(aes(ps_ind_16_bin, ps_ind_18_bin)) +
+        geom_count(color = "orange")
+      
+      p3 <- train %>%
+        ggplot(aes(ps_ind_16_bin, ps_ind_17_bin)) +
+        geom_count(color = "orange")
+      
+      p4 <- train %>%
+        ggplot(aes(ps_reg_02, ps_reg_03)) +
+        geom_point() +
+        geom_smooth(method = 'gam', color = "dark green")
+      
+      p5 <- train %>%
+        ggplot(aes(ps_car_12, ps_car_13)) +
+        geom_point() +
+        geom_smooth(method = 'gam', color = "red")
+      
+      p6 <- train %>%
+        ggplot(aes(ps_car_12, ps_car_14)) +
+        geom_point() +
+        geom_smooth(method = 'gam', color = "red")
+      
+      layout <- matrix(c(1,2,3,4,5,6),3,2,byrow=TRUE)
+      multiplot(p1, p4, p2, p3, p5, p6, layout=layout)
+    }#Pairwise relationships
+    
+    
+  }#Exploring correlated features
+  
+}#09. Multi feature comparison
