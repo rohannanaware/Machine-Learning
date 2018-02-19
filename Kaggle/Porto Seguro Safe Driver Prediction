@@ -1,12 +1,14 @@
 #Author : Rohan M. Nanaware
 #Purpose: Predict the drivers most likely to claim insurance - Will feed into setting fair premium amount accounting propensity to claim
 #Date C.: 09th Feb 2018
-#Date M.: 14th Feb 2018
+#Date M.: 20th Feb 2018
 #Updates:
 {
   #09th Feb 2018 - Module 01, 02, 03, 04, 05
   #14th Feb 2018 - Module 00, 01, 06, 07
   #15th Feb 2018 - Module 00, 08
+  #18th Feb 2018 - Module 00, 09
+  #20th Feb 2018 - Module 00, 10, 11
 }
 {
   #mutute_at - mutate a group of columns
@@ -19,6 +21,12 @@
   #https://www.rdocumentation.org/packages/tidyr/versions/0.8.0/topics/spread
   #binom.test - need to read more - Performs an exact test of a simple null hypothesis about the probability of success in a Bernoulli experiment
   #https://en.wikipedia.org/wiki/Binomial_test
+  #ggplot - geom_bar, geom_smooth, geom_count
+  #Module 9 - Pairwise correlations
+  #Ridgeline plots - https://cran.r-project.org/web/packages/ggridges/
+  #Normalised Gini Function
+  #https://www.kaggle.com/batzner/gini-coefficient-an-intuitive-explanation
+  
 }#00. Reference
 {
   # general visualisation
@@ -118,7 +126,7 @@
   wd <- "E:/Delivery/1 Active/Kaggle/Competitions/Porto Seguro Safe Driver Prediction"
   setwd(wd)
 }#03. Set working directory
-{
+{as.
   train <- as.tibble(fread("train.csv", header = T, stringsAsFactors = F, na.strings = c("-1","-1.0")))
   test <- as.tibble(fread("test.csv", header = T, stringsAsFactors = F, na.strings = c("-1","-1.0")))
 }#04. Import data
@@ -1396,9 +1404,581 @@
       
       layout <- matrix(c(1,2,3,4,5,6),3,2,byrow=TRUE)
       multiplot(p1, p4, p2, p3, p5, p6, layout=layout)
+      # We find:
+      #   
+      #   The barplot of ps_ind_14 demonstrates the strong correlation with ps_ind_12_bin that stems mostly from the practically exclusive association of ps_ind_14 == 0 with ps_ind_12_bin == FALSE and ps_ind_14 == 1 with ps_ind_12_bin == TRUE. And even the ps__14 values in between show a gradually increasing fraction of ps_ind_12_bin == TRUE.
+      # 
+      # We study the binary feature relations using count plots, where the size of the dots correspond to the number of cases. For ps_ind_16_bin vs ps_ind_17_bin and ps_ind_18_bin we see that the predominant associations are ps_ind_16_bin == TRUE with ps_ind_17_bin == FALSE and ps_ind_18_bin == FALSE, respectively. There are no cases in these two relations were both features are TRUE.
+      # 
+      # For the floating point features we use a scatter plot together with a simple smoothing model to visualise their relationships. In case of ps_reg_02 we clearly see its distinct values. Here the linear relation is formally present but doesn’t look too convincing, considering the largely overlapping ranges of ps_reg_03.
+      # 
+      # In contrast, the two ps_car feature plots show a decent correlation that might even be underestimated by the coefficients due to the presence of obvious outliers.
+      
     }#Pairwise relationships
-    
+    {
+      # Let’s add a little pinch of interactivity to our EDA recipe. Below we are using the R wrapper for the plotly toolkit which allows us to create plots we can examine from different angles and zoom stages. Here we use it to visualise the covariation between the three ps_car features (12, 13, 14) and its impact on the (colour-coded) target variable. Note, that we’re only using a subset of the data to keep the plot at a manageable size:
+      set.seed(4321)
+      train %>%
+        filter(!is.na(ps_car_12) & !is.na(ps_car_13) & !is.na(ps_car_14)) %>%
+        select(ps_car_12, ps_car_13, ps_car_14, target) %>%
+        sample_n(5e4) %>%
+        plot_ly(x = ~ps_car_12, y = ~ps_car_13, z = ~ps_car_14,
+                color = ~target, colors = c('#BF382A', '#0C4B8E'),
+                text = ~paste('ps_car_12:', ps_car_12,
+                              '<br>ps_car_13:', ps_car_13,
+                              '<br>ps_car_14:', ps_car_14,
+                              '<br>Target:', target)
+        ) %>%
+        add_markers() %>%
+        layout(title = "'Car' group correlations and target impact",
+               scene = list(xaxis = list(title = 'ps_car_12'),
+                            yaxis = list(title = 'ps_car_13'),
+                            zaxis = list(title = 'ps_car_14')))
+      
+      # We find that the correlations can clearly be seen and are leading to a characteristic plane in the 3D parameter space. The target == 1 variables appear to be homogeneously dotted throughout this plane. Have a go a exploring the data through this plot :-)
+    }#Interactive multi-dimensional relations
     
   }#Exploring correlated features
+  {
+    # Let’s add a little pinch of interactivity to our EDA recipe. Below we are using the R wrapper for the plotly toolkit which allows us to create plots we can examine from different angles and zoom stages. Here we use it to visualise the covariation between the three ps_car features (12, 13, 14) and its impact on the (colour-coded) target variable. Note, that we’re only using a subset of the data to keep the plot at a manageable size:
+    set.seed(4321)
+    train %>%
+      filter(!is.na(ps_car_12) & !is.na(ps_car_13) & !is.na(ps_car_14)) %>%
+      select(ps_car_12, ps_car_13, ps_car_14, target) %>%
+      sample_n(5e4) %>%
+      plot_ly(x = ~ps_car_12, y = ~ps_car_13, z = ~ps_car_14,
+              color = ~target, colors = c('#BF382A', '#0C4B8E'),
+              text = ~paste('ps_car_12:', ps_car_12,
+                            '<br>ps_car_13:', ps_car_13,
+                            '<br>ps_car_14:', ps_car_14,
+                            '<br>Target:', target)
+      ) %>%
+      add_markers() %>%
+      layout(title = "'Car' group correlations and target impact",
+             scene = list(xaxis = list(title = 'ps_car_12'),
+                          yaxis = list(title = 'ps_car_13'),
+                          zaxis = list(title = 'ps_car_14')))
+    # We find that the correlations can clearly be seen and are leading to a characteristic plane in the 3D parameter space. The target == 1 variables appear to be homogeneously dotted throughout this plane. Have a go a exploring the data through this plot :-)
+    
+    {
+      # Now we are putting all the correlated pieces together in a comprehensive, facetted overview plot for the main parameters in this section. These parameters don’t show an obvious connection in the correlation plot, but it is worth looking for more subtle interactions here.
+      # 
+      # We are plotting the distribution of ps_car_14 (which is correlated with ps_car_12/13) for the 5 ps_ind_14 classes (correlated with ps_ind_12_bin) using ridgeline plots through ggridges. Ridgeline plots allow for a quick comparison of overlapping (density) curves.
+      # 
+      # The we separate those overlapping curves by ps_ind_16_bin (correlated with ps_ind_17_bin and ps_ind_18_bin) horizontally and finally by target vertically. This is the result:
+      train %>%
+        ggplot(aes(ps_car_14, reorder(ps_ind_14, - ps_car_14, FUN = median), fill = as.factor(ps_ind_14))) +
+        geom_density_ridges() +
+        labs(y = "ps_ind_14") +
+        theme(legend.position = "none", plot.title = element_text(size=11)) +
+        facet_grid(ps_ind_16_bin ~ target) +
+        ggtitle("Target (left/right) vs ps_ind_16_bin (top/bottom) for ps_car_14 (x) vs ps_ind_14 (y, col)")
+      # We find:
+      #   
+      #   Reading from left to right and top to bottom the number of populated levels of ps_ind_14 (i.e. number of colours) steadily decreases. That means that target == 1 & ps_ind_16_bin == TRUE only contain ps_ind_14 <= 1. In general, target == 1 (i.e. claims) contains fewer occupied levels of ps_ind_14 than target == 0 (no claims).
+      # 
+      # The distributions of ps_car_14 show notable differences for different ps_ind_14 levels troughout the grid. In particular ps_ind_14 == 0 is associated with significantly larger ps_car_14 values.
+      # 
+      # The ps_ind_14 levels from 1-3 are much more similar but also show subtle differences particularly towards larger values of ps_car_14. We have already seen above that level 4 is only sparsely populated.
+      
+    }#Multi-parameter grid
+    {
+      # 
+      # The previous section has revealed a notable amount of variation in the continuous feature ps_car_14 from interactions with correlated categorical features. This was something that we did not see based on the distribution of ps_car_14 alone. Therefore, it is reasonable to ask whether other features might interact in a similar way. That analysis is the subject of this section.
+      # 
+      # We start by relating the same ps_car_14 to those integer features that we found to have a strong impact on the claim rates. Namely, those are the ps_ind features “01”, “03”, and “15” as well as ps_car_11:
+      p1 <- train %>%
+        ggplot(aes(ps_car_14, reorder(ps_car_11, - ps_car_14, FUN = median), fill = as.factor(ps_car_11))) +
+        geom_density_ridges() +
+        labs(y = "ps_car_11") +
+        theme(legend.position = "none")
+      
+      p2 <- train %>%
+        ggplot(aes(ps_car_14, reorder(ps_ind_01, - ps_car_14, FUN = median), fill = as.factor(ps_ind_01))) +
+        geom_density_ridges() +
+        labs(y = "ps_ind_01") +
+        theme(legend.position = "none")
+      
+      p3 <- train %>%
+        ggplot(aes(ps_car_14, reorder(ps_ind_03, - ps_car_14, FUN = median), fill = as.factor(ps_ind_03))) +
+        geom_density_ridges() +
+        labs(y = "ps_ind_03") +
+        theme(legend.position = "none")
+      
+      p4 <- train %>%
+        ggplot(aes(ps_car_14, reorder(ps_ind_15, - ps_car_14, FUN = median), fill = as.factor(ps_ind_15))) +
+        geom_density_ridges() +
+        labs(y = "ps_ind_15") +
+        theme(legend.position = "none")
+      
+      layout <- matrix(c(1,2,3,4),2,2,byrow=TRUE)
+      multiplot(p1, p2, p3, p4, layout=layout)
+      
+      # We find:
+      #   
+      #   Our intuition was useful with regard to ps_car_11 and also ps_ind_01. The car feature leads to strong differences in the ps_car_14 distribution - essentially disecting the distribution into distinct peaks. The signature of the NAs is interesting too. In case of the ind feature there is a smaller amount of variation in the size of the multiple peaks.
+      # 
+      # For ps_ind “03” and “15”, however, the differences are very subtle and practically non-existent; respectively. Despite their strong impact on the claim rates the variation features appear to leave the ps_car_14 distribution virtually unchanged.
+      
+    }#The impact of uncorrelated high-signal features
+  }#Interactive multi-dimensional relations
   
 }#09. Multi feature comparison
+{
+  # number of NAs
+  nano <- combine %>%
+    is.na() %>%
+    rowSums() %>%
+    as.integer()
+  
+  # Sum up "ind" binary columns
+  bin_ind <- combine %>% select(ends_with("bin")) %>%
+    select(starts_with("ps_ind")) %>%
+    rowSums() %>%
+    as.integer()
+  
+  # Sum up "calc" binary columns
+  bin_calc <- combine %>% select(ends_with("bin")) %>%
+    select(starts_with("ps_calc")) %>%
+    rowSums() %>%
+    as.integer()
+  
+  # "ind" binary column differences per row
+  # (uses "rep" to create a combine-size data frame from the
+  # single reference row that we then subtract from all rows)
+  bins <- combine %>%
+    select(ends_with("bin")) %>%
+    select(starts_with("ps_ind")) %>%
+    mutate_all(funs(as.integer))
+  
+  ref_bin <- bins %>% summarise_all(median, na.rm = TRUE)
+  ref_bin <- ref_bin[rep(1,nrow(combine)),]
+  
+  diff_ind <- rowSums(abs(bins - ref_bin))
+  
+  # "calc" binary column differences per row
+  bins <- combine %>%
+    select(ends_with("bin")) %>%
+    select(starts_with("ps_calc")) %>%
+    mutate_all(funs(as.integer))
+  
+  ref_bin <- bins %>% summarise_all(median, na.rm = TRUE)
+  ref_bin <- ref_bin[rep(1,nrow(combine)),]
+  
+  diff_calc <- rowSums(abs(bins - ref_bin))
+  
+  
+  # Apply changes to combine frame
+  combine <- combine %>%
+    mutate(nano = nano,
+           bin_ind = bin_ind,
+           bin_calc = bin_calc,
+           diff_ind = diff_ind,
+           diff_calc = diff_calc)
+  
+  # Split into train vs test
+  train <- combine %>%
+    filter(dset == "train")
+  test <- combine %>%
+    filter(dset == "test")
+  
+  {
+    p1 <- train %>%
+      ggplot(aes(nano, fill = as.factor(nano))) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none") +
+      labs(x = "Number of NAs")
+    
+    p2 <- train %>%
+      group_by(nano, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ungroup() %>%
+      ggplot(aes(nano, frac_claim)) +
+      geom_point(color = "red") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "orange") +
+      theme(legend.position = "none") +
+      labs(x = "Number of NAs", y = "Claims [%]") +
+      facet_zoom(x = nano < 5, y = frac_claim < 10)
+    
+    layout <- matrix(c(1,2),2,1,byrow=TRUE)
+    multiplot(p1, p2, layout=layout)
+    
+  #   We find:
+  #     
+  #     The number of NAs is predominantly low with most IDs having <= 2 NA entries (log axis). Interestingly, 2 NAs, not zero, is the most common number. Beyond that, the numbers drop quickly and there are only a few cases with more than 5 NAs. It is interesting to note that no ID has exactly 5 NAs, which might reflect the way our features are related. There is a small second peak at 7 NAs, which might also reveal some underlying structure in the data.
+  #   
+  #   The claim rates show a very interesting pattern with a steady decline from 0 to 4 within the percentage range of 2-5%. For 6 and 7 NAs the rates are very high in comparison (means of 60% and 40%) and again there is a declining trend. For 8 NAs there are not enough cases to make a statistically significant statement.
+  # 
+  # The differences between 0-4 and 6-8 NAs suggests that we might have two distinct populations here which reflect differences in the policy holder’s characteristics. It will be well worth coming back to these distinctions during the course of our further analysis.
+  }#Number of NAs per ID
+  {
+    p1 <- train %>%
+      ggplot(aes(bin_ind, fill = as.factor(bin_ind))) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none") +
+      labs(x = "Sum of binary 'ind' features")
+    
+    p2 <- train %>%
+      filter(bin_ind < 6) %>%
+      group_by(bin_ind, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ungroup() %>%
+      ggplot(aes(bin_ind, frac_claim)) +
+      geom_point(color = "orange") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "orange") +
+      theme(legend.position = "none") +
+      labs(x = "Sum of binary 'ind' features", y = "Claims [%]")
+    
+    p3 <- train %>%
+      ggplot(aes(bin_calc, fill = as.factor(bin_calc))) +
+      geom_bar() +
+      scale_y_log10() +
+      theme(legend.position = "none") +
+      labs(x = "Sum of binary 'calc' features")
+    
+    p4 <- train %>%
+      filter(bin_ind < 6) %>%
+      group_by(bin_calc, target) %>%
+      count() %>%
+      spread(target, n) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ungroup() %>%
+      ggplot(aes(bin_calc, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "Sum of binary 'calc' features", y = "Claims [%]")
+    
+    layout <- matrix(c(1,2,3,4),2,2,byrow=FALSE)
+    multiplot(p1, p2, p3, p4, layout=layout)
+    
+    # We find:
+    #   
+    #   Adding up the “ind” binary features results in a distribution which peaks at 2 and has a range of 1-6. There is no “0”, which means that at least one of the binary flags is always set. At the beginning of this kernel we saw that there are a total of 11 “ps_ind_??_bin” features but we only have a maximum of six set to “TRUE/1” at the same time. This is consistent with “FALSE/0” being the dominating value for most of these features.
+    # 
+    # For plotting the sum of binary “ind” features (bottom left) we see that there are only a few instances of 6 binary flags set (top left). This leads to a large statistical error bar that would dominate the plot and make it harder to read. Therefore, we remove binary sum == 6 from the bottom left plot. For the remaining sums there is a trend of increasing claim rate with increasing sum; but only “3” vs “1” or “2” is statistically significant. Still, this could be a useful new feature.
+    # 
+    # The “calc” binary features on the other hand display no significant variation in their claim rates; thus providing further evidence that the “calc” group might not be very useful for our prediction goal. Here the sum distribution also peaks at 2, but takes a minimum of 0 and also a maximum of 6 for in total 6 “calc” features. Toward larger sums the (log-scaled) distribution has less of a sharp decline than for the “ind” features.
+  }#Sum of binary features
+  {
+    p1 <- train %>%
+      ggplot(aes(as.factor(diff_ind), fill = as.factor(diff_ind))) +
+      geom_bar() +
+      scale_y_sqrt() +
+      labs(fill = "diff_ind", x = "Absolute difference of binary 'ind' features")
+    
+    p2 <- train %>%
+      ggplot(aes(as.factor(diff_calc), fill = as.factor(diff_calc))) +
+      geom_bar() +
+      scale_y_sqrt() +
+      labs(fill = "diff_calc", x = "Absolute difference of binary 'calc' features")
+    
+    p3 <- train %>%
+      filter(diff_ind < 7) %>%
+      group_by(diff_ind, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ungroup() %>%
+      ggplot(aes(diff_ind, frac_claim)) +
+      geom_point(color = "orange") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "orange") +
+      theme(legend.position = "none") +
+      labs(x = "Absolute difference of binary 'ind' features", y = "Claims [%]")
+    
+    p4 <- train %>%
+      filter(diff_calc < 6) %>%
+      group_by(diff_calc, target) %>%
+      count() %>%
+      spread(target, n, fill = 0) %>%
+      mutate(frac_claim = `1`/(`1`+`0`)*100,
+             lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+             upr = get_binCI(`1`,(`1`+`0`))[[2]]*100
+      ) %>%
+      ungroup() %>%
+      ggplot(aes(diff_calc, frac_claim)) +
+      geom_point(color = "blue") +
+      geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "blue") +
+      theme(legend.position = "none") +
+      labs(x = "Absolute difference of of binary 'calc' features", y = "Claims [%]")
+    
+    layout <- matrix(c(1,2,3,4),2,2,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, layout=layout)
+    # We find:
+    #   
+    #   The differences of “ind” binary values are dominated by values 1 and 3. Interestingly, there are no values of zero, indicating that our median reference row does not actually occur in the data. We’re seeing a pattern in the claim rates suggesting that the claim fraction rises the further away we step from our reference row values. However, only the differences between values 1 & 2 vs 3 & 4 appear to be statistically significant.
+    # 
+    # In the “calc” binary features we see that we still haven’t managed to find a useful signal. There might be a tentative decrease in claim rate between the values of 2 vs 3, but everything is consistent within the uncertainties. Therefore, it appears that there is very little predictive power in the “calc” group.
+  }#Difference measure for binary features
+
+}#10. Feature engineering
+{
+  {
+    bin_col <- combine %>% select(ends_with("bin")) %>%
+      colnames() %>% unlist(use.names = FALSE) %>% as.character()
+    cat_col <- combine %>% select(ends_with("cat")) %>%
+      colnames() %>% unlist(use.names = FALSE) %>% as.character()
+    
+    train_frac_bin <- NULL
+    for (i in bin_col){
+      foo <- combine %>%
+        group_by(!!sym(i), dset) %>%
+        count() %>%
+        spread(dset, n, fill = 0) %>%
+        mutate(frac_train = train/(train+test)*100,
+               lwr = get_binCI(train,(train+test))[[1]]*100,
+               upr = get_binCI(train,(train+test))[[2]]*100
+        )
+      train_frac_bin <- tibble(name = i,
+                               value = c(FALSE, TRUE),
+                               tfrac = c(foo$frac_train),
+                               lwr = c(foo$lwr),
+                               upr = c(foo$upr)) %>%
+        bind_rows(train_frac_bin)
+    }
+    
+    plot_cat_train_test <- function(col){
+      col <- enquo(col)
+      combine %>%
+        group_by(!!col, dset) %>%
+        count() %>%
+        spread(dset, n, fill = 0) %>%
+        mutate(frac_train = train/(train+test)*100,
+               lwr = get_binCI(train,(train+test))[[1]]*100,
+               upr = get_binCI(train,(train+test))[[2]]*100,
+               col = !!col
+        ) %>%
+        ggplot(aes(col, frac_train)) +
+        geom_point() +
+        geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7) +
+        labs(x = as.character(col)[2], y = "")
+    }
+    
+    p1 <- combine %>%
+      ggplot(aes(id, fill = dset)) +
+      geom_density(bw = 1, alpha = 0.5) +
+      coord_cartesian(ylim = c(7.3e-4,8.3e-4))
+    
+    p2 <- train_frac_bin %>%
+      ggplot(aes(name, tfrac, color = value)) +
+      geom_point() +
+      geom_errorbar(aes(ymin = lwr, ymax = upr, color = value), width = 0.5, size = 0.7) +
+      labs(x = "Binary 'ind' features", y = "Training set percentage") +
+      theme(axis.text.x  = element_text(angle=45, hjust=1, vjust=0.9))
+    
+    layout <- matrix(c(1,2),2,1,byrow=TRUE)
+    multiplot(p1, p2, layout=layout)
+    
+    # We find:
+    #   
+    #   The id values appear to be pretty randomly distributed. There is no obvious id range where we find predominantly train or test data. We’re using a density plot here to copmare the relative fluctuations.
+    # 
+    # The binary feature levels are remarkably similar in terms of their train/(train+test) percentage. We see that on average the train data makes up about 40% of each feature and for each TRUE & FALSE level, respectively. Levels with larger deviation have only a few objects and therefore large errors. Everything is consistent within the uncertainties.
+    # 
+    # Next, we will have a look at the levels of the categorical features. Our approach will be the same as for the binary features, in that we compute the train/(train+test) percentage for each level and then plot everything on a comprehensive plot. This figure is rather busy and the important result is in the overall picture rather than the details:
+    
+    p1 <- plot_cat_train_test(ps_ind_02_cat) 
+    p2 <- plot_cat_train_test(ps_ind_04_cat)
+    p3 <- plot_cat_train_test(ps_ind_05_cat) 
+    p4 <- plot_cat_train_test(ps_car_01_cat)
+    p5 <- plot_cat_train_test(ps_car_02_cat)
+    p6 <- plot_cat_train_test(ps_car_03_cat)
+    p7 <- plot_cat_train_test(ps_car_04_cat)
+    p8 <- plot_cat_train_test(ps_car_05_cat)
+    p9 <- plot_cat_train_test(ps_car_06_cat)
+    p10 <- plot_cat_train_test(ps_car_07_cat)
+    p11 <- plot_cat_train_test(ps_car_08_cat)
+    p12 <- plot_cat_train_test(ps_car_09_cat)
+    p13 <- plot_cat_train_test(ps_car_10_cat)
+    p14 <- plot_cat_train_test(ps_car_11_cat)
+    
+    layout <- matrix(seq(1,14),2,7,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, layout=layout)
+    
+    # We find:
+    #   
+    #   Once more, practically all levels appear to be consistent with a 40% train percentage, which is even more remarkable than for the binary features.
+    # 
+    # There are a few tentative outliers, e.g. in ps_ind_05_cat, but for so many levels that’s almost expected for the 95% confidence uncertainties that we are plotting.
+    # 
+    # Finally, we will also sample some of the floating-point features. Here we use overlapping density plots for the train vs test observations:
+    
+    p1 <- combine %>%
+      ggplot(aes(ps_reg_01, fill = dset)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p2 <- combine %>%
+      ggplot(aes(ps_reg_02, fill = dset)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p3 <- combine %>%
+      ggplot(aes(ps_reg_03, fill = dset)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p4 <- combine %>%
+      ggplot(aes(ps_calc_01, fill = dset)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p5 <- combine %>%
+      ggplot(aes(ps_calc_02, fill = dset)) +
+      geom_density(alpha = 0.5, bw = 0.05) +
+      theme(legend.position = "none")
+    
+    p6 <- combine %>%
+      ggplot(aes(ps_calc_03, fill = dset)) +
+      geom_density(alpha = 0.5, bw = 0.05)
+    
+    layout <- matrix(c(1,2,3,4,5,6),2,3,byrow=TRUE)
+    multiplot(p1, p2, p3, p4, p5, p6, layout=layout)
+    
+    # We find that for these features the overlap appears to be practically perfect. We’re using two different colours, with an alpha-mixing parameter of 0.5, but all we see is the blended overlap.
+    # 
+    # In summary, we find the train vs test data sets to be remarkably similar in the distributions of their features. The train/test split appears to be well executed and stratified by feature levels.
+  }#Train vs. test
+  {
+    # Feature formatting
+    combine <- combine %>%
+      mutate_at(vars(ends_with("cat")), funs(as.integer)) %>%
+      mutate_at(vars(ends_with("bin")), funs(as.integer)) %>%
+      mutate(target = as.integer(levels(target))[target])
+    
+    # Specific definitions:
+    #---------------------------------
+    # predictor features
+    ind_cols <- c("ps_ind_01","ps_ind_02_cat","ps_ind_03","ps_ind_04_cat","ps_ind_05_cat","ps_ind_06_bin","ps_ind_07_bin","ps_ind_08_bin","ps_ind_09_bin","ps_ind_10_bin","ps_ind_11_bin","ps_ind_12_bin","ps_ind_13_bin","ps_ind_14","ps_ind_15","ps_ind_16_bin","ps_ind_17_bin","ps_ind_18_bin")
+    reg_cols <- c("ps_reg_01","ps_reg_02","ps_reg_03")
+    car_cols <- c("ps_car_01_cat","ps_car_02_cat","ps_car_03_cat","ps_car_04_cat","ps_car_05_cat","ps_car_06_cat","ps_car_07_cat","ps_car_08_cat","ps_car_09_cat","ps_car_10_cat","ps_car_11_cat","ps_car_11","ps_car_12","ps_car_13","ps_car_14","ps_car_15")
+    calc_cols <- c("ps_calc_01","ps_calc_02","ps_calc_03","ps_calc_04","ps_calc_05","ps_calc_06","ps_calc_07","ps_calc_08","ps_calc_09","ps_calc_10","ps_calc_11","ps_calc_12","ps_calc_13","ps_calc_14","ps_calc_15_bin","ps_calc_16_bin","ps_calc_17_bin","ps_calc_18_bin","ps_calc_19_bin","ps_calc_20_bin")
+    eng_cols <- c("nano", "bin_ind", "bin_calc", "diff_ind", "diff_calc")
+    
+    train_cols <- c(ind_cols, reg_cols, car_cols, eng_cols)
+    
+    # target feature
+    y_col <- c("target")
+    # identification feature
+    id_col <- c("id") 
+    # auxilliary features
+    aux_cols <- c("dset")
+    #---------------------------------
+    
+    # General extraction
+    #---------------------------------
+    # extract test id column
+    test_id <- combine %>%
+      filter(dset == "test") %>%
+      select(!!sym(id_col))
+    
+    # all relevant columns for train/test
+    cols <- c(train_cols, y_col, aux_cols)
+    combine <- combine %>%
+      select_(.dots = cols)
+    
+    
+    # split train/test
+    train <- combine %>%
+      filter(dset == "train") %>%
+      select_(.dots = str_c("-",c(aux_cols)))
+    test <- combine %>%
+      filter(dset == "test") %>%
+      select_(.dots = str_c("-",c(aux_cols, y_col)))
+    #---------------------------------
+    
+    xgb_normalizedgini <- function(preds, dtrain){
+      actual <- getinfo(dtrain, "label")
+      score <- NormalizedGini(preds,actual)
+      return(list(metric = "NormalizedGini", value = score))
+    }
+    
+    set.seed(4321)
+    trainIndex <- createDataPartition(train$target, p = 0.8, list = FALSE, times = 1)
+    
+    train <- train[trainIndex,]
+    valid <- train[-trainIndex,]
+  }#Feature selection, evaluation metric, and validation split
+  {
+    #convert to XGB matrix
+    foo <- train %>% select(-target)
+    bar <- valid %>% select(-target)
+    
+    dtrain <- xgb.DMatrix(as.matrix(foo),label = train$target)
+    dvalid <- xgb.DMatrix(as.matrix(bar),label = valid$target)
+    dtest <- xgb.DMatrix(as.matrix(test))
+    
+    xgb_params <- list(colsample_bytree = 0.7, #variables per tree 
+                       subsample = 0.7, #data subset per tree 
+                       booster = "gbtree",
+                       max_depth = 5, #tree levels
+                       eta = 0.3, #shrinkage
+                       eval_metric = xgb_normalizedgini,
+                       objective = "reg:logistic",
+                       seed = 4321,
+                       nthread = -1
+    )
+    
+    watchlist <- list(train=dtrain, valid=dvalid)
+    
+    set.seed(1234)
+    xgb_cv <- xgb.cv(xgb_params,dtrain,early_stopping_rounds = 5, nfold = 5, nrounds=50, maximize = TRUE)
+    
+    set.seed(4321)
+    gb_dt <- xgb.train(params = xgb_params,
+                       data = dtrain,
+                       print_every_n = 5,
+                       watchlist = watchlist,
+                       nrounds = xgb_cv$best_iteration)
+  }#XGBoost parameters and fitting
+  {
+    imp_matrix <- as.tibble(xgb.importance(feature_names = colnames(train %>% select(-target)), model = gb_dt))
+    
+    imp_matrix %>%
+      ggplot(aes(reorder(Feature, Gain, FUN = max), Gain, fill = Feature)) +
+      geom_col() +
+      coord_flip() +
+      theme(legend.position = "none") +
+      labs(x = "Features", y = "Importance")
+    
+    # We find:
+    #   
+    #   As pointed out in several other modelling kernels, the features ps_car_13 and ps_reg_03 are the most important ones for our tentative prediction model. Also note the two ps_ind features on 3rd and 4th rank.
+    # 
+    # In addition, our engineered features are not doing bad either. diff_ind is ranked the 5th most significant feature, and nano still has some impact, too. diff_calc, bin_calc, and bin_ind are towards the end of the list but (not only) in this competition small improvements can have a large impact on the resulting leaderboard score.
+    # 
+    # Those results are preliminary, since the model performance can certainly be optimised, but they already show that feature engineering is a promising way of improving your prediction.
+  }#Feature importance
+  {
+    pred <- test_id %>%
+      mutate(target = predict(gb_dt, dtest))
+    
+    pred %>% write_csv('submit.csv')
+    
+    sample_submission <- as.tibble(fread("sample_submission.csv", header = T, stringsAsFactors = F))
+    identical(dim(sample_submission),dim(pred))
+    glimpse(sample_submission)
+    glimpse(pred)
+    bind_cols(sample_submission, pred) %>% head(5)
+    
+  }#Prediction and submission file
+
+}#11. Modelling preparation
