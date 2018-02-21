@@ -26,7 +26,16 @@
   #Ridgeline plots - https://cran.r-project.org/web/packages/ggridges/
   #Normalised Gini Function
   #https://www.kaggle.com/batzner/gini-coefficient-an-intuitive-explanation
-  
+  #Feature selection
+  #https://www.analyticsvidhya.com/blog/2016/03/select-important-variables-boruta-package/  
+  #gradient boosting
+  #http://blog.kaggle.com/2017/01/23/a-kaggle-master-explains-gradient-boosting/ - 
+  #Fitting single decision tree overfits data(fails to include predictive power from 
+  #   multiple, overlapping regions of the feature space); instead training subsequent 
+  #   trees on the residuals of the prior tree increases the chances of better usage of 
+  #   predictive power of different sections in the data
+  #https://www.analyticsvidhya.com/blog/2016/02/complete-guide-parameter-tuning-gradient-boosting-gbm-python/
+  #https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
 }#00. Reference
 {
   # general visualisation
