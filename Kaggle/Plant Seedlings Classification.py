@@ -14,8 +14,15 @@ Conv Nets: A Modular Perspective     -
     Need more research/basics study of CNNs
     https://cs231n.github.io/convolutional-networks/
     https://machinelearningmastery.com/dropout-regularization-deep-learning-models-keras/
+External data -
+    https://vision.eng.au.dk/plant-seedlings-dataset/#images-from-the-wild
+How to decide the right size of an image for optimum performance?
+Create a python virtual environment -
+    https://stackoverflow.com/questions/32167418/python-pip-install-trouble-shooting-permissionerror-winerror-5-access-is
+
 """
 
+"""Module 1
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -28,7 +35,7 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 # Our application logic will be added here
 def cnn_model_fn(features, labels, mode):
-  """Model function for CNN."""
+  #Model function for CNN.
   # Input Layer
   input_layer = tf.reshape(features["x"], [-1, 28, 28, 1])
 
@@ -89,5 +96,28 @@ def cnn_model_fn(features, labels, mode):
           labels=labels, predictions=predictions["classes"])}
   return tf.estimator.EstimatorSpec(
       mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+"""
 
+###########################################################################################################
+"""Module 2
+#%matplotlib inline
+import datetime as dt
+import matplotlib.pyplot as plt
+plt.rcParams['figure.figsize'] = [16, 10]
+plt.rcParams['font.size'] = 16
+import numpy as np
+import os
+import pandas as pd
+import seaborn as sns
+from keras.applications import xception
+from keras.preprocessing import image
+from mpl_toolkits.axes_grid1 import ImageGrid
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
+from tqdm import tqdm
+"""
 
+###########################################################################################################
+"""Module 3
+https://www.kaggle.com/raoulma/plants-xception-90-06-test-accuracy/notebook
+"""
