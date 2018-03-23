@@ -1,8 +1,11 @@
-
-# Logistic regression function - 
-#     Make it work on larger matrices
-#     Modify the output to match the input of AIC for backward selection
-
+#Author - Rohan M. Nanaware
+#Date C.- 23rd Mar 2018
+#Date M.- 23rd Mar 2018
+#Purpose- Churn model - Logistic regression with regularisation
+#Notes  -
+    # Logistic regression function - 
+    #     Make it work on larger matrices
+    #     Modify the output to match the input of AIC for backward selection
 {
   train.y =
   train.X =
@@ -145,6 +148,14 @@
   TEST.X  <- DATA[-sample,!(colnames(DATA) == 'FLAG_RETENTION')]
   TEST.Y  <- DATA[-sample,colnames(DATA) == 'FLAG_RETENTION']
   
+  DATA <- data.table(DATA)
+  TRAIN.X <- DATA[sample,!'FLAG_RETENTION', with = FALSE]
+  TRAIN.Y <- DATA[sample,'FLAG_RETENTION',with = FALSE]
+  TEST.X  <- DATA[-sample,!(colnames(DATA) == 'FLAG_RETENTION')]
+  TEST.Y  <- DATA[-sample,colnames(DATA) == 'FLAG_RETENTION']
+  
+  
+  
 }# 04. Split the train and test data
 
 {
@@ -188,10 +199,10 @@
   # plot
   # predict(fit, newx = x[1:5,], type = "class", s = c(0.05, 0.01))
   
-  cvfit <- cv.glmnet(x = as.matrix(TRAIN.X),
-                     y = TRAIN.Y,
-                     family = "binomial",
-                     type.measure = "class")
+  system.time(cvfit <- cv.glmnet(x = as.matrix(TRAIN.X),
+                                 y = TRAIN.Y,
+                                 family = "binomial",
+                                 type.measure = "class"))
   
   plot(cvfit)
   
