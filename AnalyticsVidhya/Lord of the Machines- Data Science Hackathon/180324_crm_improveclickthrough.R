@@ -50,7 +50,7 @@
 }# 01. Load libraries
 {
   
-  wd <- "D:/Delivery/01 Active/AnalyticsVidhya/Lord of the Machines- Data Science Hackathon"
+  wd <- "D:/Delivery/Active/AnalyticsVidhya/Lord of the Machines- Data Science Hackathon"
   setwd(wd)
 
 }# 02. Set working directory
@@ -137,29 +137,44 @@
       set.seed(1007)
       XGB_click <- xgboost(data = data.matrix(TRAIN.F), 
                            label = TRAIN.L$is_click, 
-                           eta = 0.1,
+                           eta = 0.01,
                            max_depth = 5,
                            nround=100, 
                            seed = 1007,
                            objective = "binary:logistic",
                            nthread = 3,
-                           verbose = 0
+                           verbose = F
       )
       pred       <- predict(XGB_click, data.matrix(TEST.F))
-      prediction <- as.data.frame(as.numeric(pred > 0.012))
-      precision[i]        <- sum(as.numeric(pred > 0.012) == TEST.L$is_click)/sum(as.numeric(pred < 0.012))
-      recall[i]           <- sum(as.numeric(pred > 0.012) == TEST.L$is_click)/sum(TEST.L$is_click)
-      print(paste('Progress = ', round(i/k,2)*100,"%", ' | Precision = ', round(precision[i],4)*100, "%", ' | Recall = ', round(recall[i],4)*100, "%", sep = ""))
+      confusionMatrix(as.numeric(pred > 0.19128), TEST.L$is_click)
+      error[i]        <- mean(as.numeric(pred > 0.19128) != TEST.L$is_click)
+      print(paste('Progress = ', round(i/k,2)*100,"%", ' | Accuracy = ', round(1-error[i],4)*100, "%", sep = ""))
     }
     bias     <- mean(error)
     variance <- sd(error)
     #print(error)
-    print(paste("Bias = ", bias, " & Variance = ", variance))
-}# 07. Train an XGB classifier
+    print(paste("Bias = ", round(bias,4)*100, "% ", " & Variance = ", round(variance, 4)))
+}# 07. Train an XGB classifier - **cross validation**
 {
-  
+  {
+    submission <- data.frame('id' = test$id, 
+                             'is_click' = 0)
+    head(submission)
+    write.csv(submission, '180325_sub_1_all_zeros.csv', row.names = F)
+  }# submissions with all zeros
+  {
+    pred       <- predict(XGB_click, data.matrix(test_data))
+    submission <- data.frame('id' = test$id, 
+                             'is_click' = as.numeric(pred > 0.21))
+    write.csv(submission, '180325_sub_1_all_zeros_2.csv', row.names = F)
+  }# XGB based submission - Module #7
+  {
+    pred       <- predict(XGB_click, data.matrix(test_data))
+    submission <- data.frame('id' = test$id, 
+                             'is_click' = as.numeric(pred > 0.19128))
+    write.csv(submission, '180325_sub_3.csv', row.names = F)
+  }# XGB based submission - Module #7 - with max(sens + spec)
 }# 08. Create submission
-
 
 #Sensitivity vs specificity
 library(ROCR)
