@@ -128,7 +128,7 @@
     k = 5
     #Divide the data into train and test
     train_data$ID <- sample(1:k, nrow(train_data), replace = T)
-    dep_train     <- train[, 'is_click', with = F]
+    dep_train     <- data.table('is_click' = train[train_data, on = 'id']$is_click)
     dep_train$ID  <- train_data$ID
     error         <- numeric()
     precision     <- numeric()
@@ -151,14 +151,16 @@
                            verbose = F
       )
       pred       <- predict(XGB_click, data.matrix(TEST.F))
-      confusionMatrix(as.numeric(pred > 0.19128), TEST.L$is_click)
-      error[i]        <- mean(as.numeric(pred > 0.19128) != TEST.L$is_click)
+      # hist(pred)
+      confusionMatrix(as.numeric(pred > 0.22), TEST.L$is_click)
+      error[i]        <- mean(as.numeric(pred > 0.22) != TEST.L$is_click)
       print(paste('Progress = ', round(i/k,2)*100,"%", ' | Accuracy = ', round(1-error[i],4)*100, "%", sep = ""))
     }
     bias     <- mean(error)
     variance <- sd(error)
     #print(error)
     print(paste("Bias = ", round(bias,4)*100, "% ", " & Variance = ", round(variance, 4)))
+    
 }# 07. Train an XGB classifier - **cross validation**
 {
   {
@@ -179,6 +181,13 @@
                              'is_click' = as.numeric(pred > 0.19128))
     write.csv(submission, '180325_sub_3.csv', row.names = F)
   }# XGB based submission - Module #7 - with max(sens + spec)
+  {
+    pred       <- predict(XGB_click, data.matrix(test_data))
+    submission <- data.frame('id' = test$id, 
+                             'is_click' = as.numeric(pred > 0.22))
+    write.csv(submission, './submissions/180327_sub_fe_2.csv', row.names = F)
+  }# XGB based submission - with feature engineerung - Module #10
+  
 }# 08. Create submission
 {
   #Sensitivity vs specificity
@@ -265,8 +274,8 @@
                                     ')
     
     data_emails_sent_count <- data.table(data_emails_sent_count)
-    
     data <- data_emails_sent_count[data, on = 'id']
+    nrow(data)
     
     # temp <- sqldf('SELECT * 
     #               FROM train a
