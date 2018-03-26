@@ -8,7 +8,10 @@
   #         Competition start-end date - 24th Mar to 01st Apr 2018
   #Updates-
 }# Code brief
-
+{
+  # merge dataframes
+  # https://stackoverflow.com/questions/1299871/how-to-join-merge-data-frames-inner-outer-left-right
+}# Reference
 {
   
   # Hypothesis driven
@@ -27,6 +30,7 @@
   # Stats driven
   #     1. Create a new prediction model with email open as dependent. 
   #     2. Use the email open propensity as an input to predict click propensity
+  #     3. Check variable importance plots - remove or merge features
 
 }# Approach
 
@@ -45,7 +49,8 @@
                 "caret",
                 "ggplot2",
                 "dplyr",
-                "xgboost")
+                "xgboost",
+                "sqldf")
   ipak(packages)
 }# 01. Load libraries
 {
@@ -107,7 +112,7 @@
                    "no_of_sections",
                    "df_flag"),
                with = F]
-}# 05. Process data
+}# 05. Process data - **for module 7**
 {
   # str(data)
   ohe_vars <- dummyVars(~ communication_type,
@@ -118,7 +123,7 @@
   train_data <- data_enc[df_flag == 'train', !'df_flag', with = F]
   test_data  <- data_enc[df_flag == 'test', !'df_flag', with = F]
 
-}# 06. Prepare ADS
+}# 06. Prepare ADS - **for module 7**
 {
     k = 5
     #Divide the data into train and test
@@ -175,13 +180,103 @@
     write.csv(submission, '180325_sub_3.csv', row.names = F)
   }# XGB based submission - Module #7 - with max(sens + spec)
 }# 08. Create submission
-
-#Sensitivity vs specificity
-library(ROCR)
-pred       <- predict(XGB_click, data.matrix(TEST.F))
-pred <- data.frame(pred)
-colnames(pred)
-pred <- prediction(pred$pred, TEST.L$is_click)
-ss <- performance(pred, "sens", "spec")
-plot(ss)
-ss@alpha.values[[1]][which.max(ss@x.values[[1]]+ss@y.values[[1]])]
+{
+  #Sensitivity vs specificity
+  library(ROCR)
+  pred       <- predict(XGB_click, data.matrix(TEST.F))
+  pred <- data.frame(pred)
+  colnames(pred)
+  pred <- prediction(pred$pred, TEST.L$is_click)
+  ss <- performance(pred, "sens", "spec")
+  plot(ss)
+  ss@alpha.values[[1]][which.max(ss@x.values[[1]]+ss@y.values[[1]])]
+}# 09. Identify the threshold for p giving maximum spec and sens
+{
+  {
+    data <- rbind(cbind(train[, !c("is_open","is_click"), with = F], "train"), 
+                  cbind(test, "test"))
+    colnames(data)[5] <- 'df_flag'
+    data <- campaign_data[data, on = "campaign_id"]
+    # convert date character into timestamp
+    data$send_date  <- as.Date(strptime(data$send_date, "%d-%m-%Y %H:%S"), 
+                               format = "%Y-%m-%d")
+    train$send_date <- as.Date(strptime(train$send_date, "%d-%m-%Y %H:%S"), 
+                               format = "%Y-%m-%d")
+    test$send_date  <- as.Date(strptime(test$send_date, "%d-%m-%Y %H:%S"), 
+                               format = "%Y-%m-%d")
+    
+  }#data processing - merge train/test, convert send date from char to date
+  
+  {
+    #Effect of sending emails, customer opening emails on click through rate
+    # emails_sent <- train[, list(sent = length(unique(id))),
+    #                      by = 'user_id']
+    # # emails_sent <- emails_sent[, list(cust_count = length(unique(user_id))),
+    # #                            by = 'sent']
+    # train_emails_sent <- emails_sent[train, on = 'user_id']
+    # emails_open_sent  <- train_emails_sent[, list(open = length(unique(id[is_open == 1])),
+    #                                               click = length(unique(id[is_click == 1]))),
+    #                                        by = 'sent']
+    # emails_open_sent$click_tr <- round(emails_open_sent$click / emails_open_sent$open, 4)*100
+    # View(emails_open_sent)
+    
+    # temp <- unique(merge(train, train, by = 'user_id')[send_date.x > sent_date.y,
+    #                                               list(emails_sent_td = length(unique(id.y))),
+    #                                               by = 'id.x'])
+    
+    train <- sqldf('SELECT a.*,
+                          count(distinct b.id) as emails_sent
+                          --b.id as right_id
+                          --a.id, a.user_id, count(distinct b.id)
+                  FROM train a
+                  LEFT JOIN
+                  train b
+                  ON a.user_id = b.user_id and
+                  a.send_date > b.send_date
+                  GROUP BY a.id, a.user_id, a.campaign_id, a.send_date, a.is_open, a.is_click
+                  ')
+    
+    test <- sqldf('SELECT a.*,
+                          count(distinct b.id) as emails_sent
+                          --b.id as right_id
+                          --a.id, a.user_id, count(distinct b.id)
+                  FROM test a
+                  LEFT JOIN
+                  test b
+                  ON a.user_id = b.user_id and
+                  a.send_date > b.send_date
+                  GROUP BY a.id, a.user_id, a.campaign_id, a.send_date
+                  ')
+    
+    data_emails_sent_count <- sqldf('SELECT a.id,
+                                            count(distinct b.id) as emails_sent
+                                            --b.id as right_id
+                                            --a.id, a.user_id, count(distinct b.id)
+                                    FROM data a
+                                    LEFT JOIN
+                                    data b
+                                    ON a.user_id = b.user_id and
+                                    a.send_date > b.send_date
+                                    GROUP BY a.id
+                                             --a.communication_type, a.total_links, 
+                                             --a.no_of_internal_links, a.no_of_images, a.no_of_sections,
+                                             --a.email_body, a.subject, a.email_url, a.id, a.user_id,
+                                             --a.send_date, a.df_flag
+                                    ')
+    
+    data_emails_sent_count <- data.table(data_emails_sent_count)
+    
+    data <- data_emails_sent_count[data, on = 'id']
+    
+    # temp <- sqldf('SELECT * 
+    #               FROM train a
+    #               inner join
+    #               test b
+    #               on a.user_id = b.user_id')
+    # View(temp)
+    
+    # re-run module 6, 7
+    
+  }#email response details
+  
+}# 10. Feature engineering
