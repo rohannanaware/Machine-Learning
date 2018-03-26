@@ -19,8 +19,8 @@ print(px)
 ##modify a pixel
 img[55,55] = [255,255,255]
 px = img[55,55]
-##[255 255 255]
 print(px)
+##[255 255 255]
 ##cv2.imshow('image',img)
 ##cv2.waitKey(0)
 ##cv2.destroyAllWindows()
