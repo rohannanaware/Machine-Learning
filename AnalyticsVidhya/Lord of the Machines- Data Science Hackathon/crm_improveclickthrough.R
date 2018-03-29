@@ -187,12 +187,21 @@
                              'is_click' = as.numeric(pred > 0.22))
     write.csv(submission, './submissions/180327_sub_fe_2.csv', row.names = F)
   }# XGB based submission - with feature engineerung - Module #10
+  {
+    test_data$is_open_propensity <- predict(XGB_open, as.matrix(test_data))
+    test_data$is_click           <- predict(XGB_click, as.matrix(test_data))
+    
+    test_data$is_click           <- as.numeric(test_data$is_click > 0.21)
+    submission <- data.frame('id' = test$id,
+                             'is_click' = test_data$is_click)
+    write.csv(submission, './submissions/180330_sub_sfe_1.csv', row.names = F)
+  }# XGB based submission - with is_open as predictor
   
 }# 08. Create submission
 {
   #Sensitivity vs specificity
   library(ROCR)
-  pred       <- predict(XGB_click, data.matrix(TEST.F))
+  pred       <- predict(XGB_open, data.matrix(TEST.F))
   pred <- data.frame(pred)
   colnames(pred)
   pred <- prediction(pred$pred, TEST.L$is_click)
@@ -289,3 +298,133 @@
   }#email response details
   
 }# 10. Feature engineering
+{
+  {
+    sum(train$is_open)/nrow(train)
+    # [1] 0.1004602
+    
+    {
+      data <- rbind(cbind(train[, !c("is_open","is_click"), with = F], "train"), 
+                    cbind(test, "test"))
+      colnames(data)[5] <- 'df_flag'
+      # merge data with campaign details
+      data <- campaign_data[data, on = "campaign_id"]
+      # convert date character into timestamp
+      data$send_date <- as.Date(strptime(data$send_date, "%d-%m-%Y %H:%S"), 
+                                format = "%Y-%m-%d")
+      data <- data[, c("communication_type",
+                       "total_links",
+                       "no_of_internal_links",
+                       "no_of_images",
+                       "no_of_sections",
+                       "df_flag"),
+                   with = F]
+    }# 05. Process data
+    {
+      # str(data)
+      ohe_vars <- dummyVars(~ communication_type,
+                            data = data)
+      data_ohe <- as.data.table(predict(ohe_vars, newdata = data))
+      # head(data_ohe)
+      data_enc <- cbind(data[, !'communication_type', with = F], data_ohe)
+      train_data <- data_enc[df_flag == 'train', !'df_flag', with = F]
+      test_data  <- data_enc[df_flag == 'test', !'df_flag', with = F]
+      
+    }# 06. Prepare ADS
+    {
+      k = 5
+      #Divide the data into train and test
+      train_data$ID <- sample(1:k, nrow(train_data), replace = T)
+      dep_train     <- data.table('is_open' = train$is_open)
+      dep_train$ID  <- train_data$ID
+      error         <- numeric()
+      precision     <- numeric()
+      recall        <- numeric()
+      for (i in 1:k){
+        TRAIN.F <- train_data[train_data$ID != i,!"ID", with = F]
+        TEST.F  <- train_data[train_data$ID == i,!"ID", with = F]
+        TRAIN.L <- data.frame(is_open = dep_train[dep_train$ID != i,!"ID", with = F])
+        TEST.L  <- data.frame(is_open = dep_train[dep_train$ID == i,!"ID", with = F])
+        #XGBoost algorithm :
+        set.seed(1007)
+        XGB_click <- xgboost(data = data.matrix(TRAIN.F), 
+                             label = TRAIN.L$is_open, 
+                             eta = 0.01,
+                             max_depth = 5,
+                             nround=100, 
+                             seed = 1007,
+                             objective = "binary:logistic",
+                             nthread = 3,
+                             verbose = F
+        )
+        pred       <- predict(XGB_click, data.matrix(TEST.F))
+        # hist(pred)
+        confusionMatrix(as.numeric(pred > 0.2665438), TEST.L$is_open)
+        error[i]        <- mean(as.numeric(pred > 0.2665438) != TEST.L$is_open)
+        print(paste('Progress = ', round(i/k,2)*100,"%", ' | Accuracy = ', round(1-error[i],4)*100, "%", sep = ""))
+      }
+      bias     <- mean(error)
+      variance <- sd(error)
+      #print(error)
+      print(paste("Bias = ", round(bias,4)*100, "% ", " & Variance = ", round(variance, 4)))
+      
+    }# 07. Train an XGB classifier - **cross validation**
+    {
+      #add is_open propensity as a prediction variable
+      train_data$is_open_propensity = predict(XGB_open, data.matrix(train_data[, !'ID', with = FALSE]))
+      
+      {
+        k = 5
+        #Divide the data into train and test
+        train_data$ID <- sample(1:k, nrow(train_data), replace = T)
+        dep_train     <- data.table('is_click' = train$is_click)
+        dep_train$ID  <- train_data$ID
+        error         <- numeric()
+        precision     <- numeric()
+        recall        <- numeric()
+        for (i in 1:k){
+          TRAIN.F <- train_data[train_data$ID != i,!"ID", with = F]
+          TEST.F  <- train_data[train_data$ID == i,!"ID", with = F]
+          TRAIN.L <- data.frame(is_click = dep_train[dep_train$ID != i,!"ID", with = F])
+          TEST.L  <- data.frame(is_click = dep_train[dep_train$ID == i,!"ID", with = F])
+          #XGBoost algorithm :
+          set.seed(1007)
+          XGB_open <- xgboost(data = data.matrix(TRAIN.F), 
+                              label = TRAIN.L$is_click, 
+                              eta = 0.01,
+                              max_depth = 5,
+                              nround=100, 
+                              seed = 1007,
+                              objective = "binary:logistic",
+                              nthread = 3,
+                              verbose = F
+          )
+          pred       <- predict(XGB_open, data.matrix(TEST.F))
+          # hist(pred)
+          confusionMatrix(as.numeric(pred > 0.1917), TEST.L$is_click)
+          error[i]        <- mean(as.numeric(pred > 0.191646) != TEST.L$is_click)
+          print(paste('Progress = ', round(i/k,2)*100,"%", ' | Accuracy = ', round(1-error[i],4)*100, "%", sep = ""))
+        }
+        bias     <- mean(error)
+        variance <- sd(error)
+        #print(error)
+        print(paste("Bias = ", round(bias,4)*100, "% ", " & Variance = ", round(variance, 4)))
+        
+      }# 07. Train an XGB classifier - **cross validation**
+      
+      
+      
+    }# Check performance on is_click as dependent variable
+    
+  }#Create a prediction model for customer to open an email 
+  
+  {
+    colnames(test_data)
+    
+    test_data$is_open_propensity <- predict(XGB_open, as.matrix(test_data))
+    test_data$is_click           <- predict(XGB_click, as.matrix(test_data))
+    
+    test_data$is_click           <- as.numeric(test_data$is_click > 0.21)
+  
+  }#apply XGB_open and XGB_click on test data
+}# 11. Feature engineering
