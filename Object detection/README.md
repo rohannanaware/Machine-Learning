@@ -1,7 +1,7 @@
 <h2>Object detection and tracking</h2>
 
 
-<h4>Using mobile phoe as an IP camera</h4>
+<h4>Using mobile phone as an IP camera</h4>
 
 * Go to your app store and install IP Webcam
 * Open the app, Press “Start server” and note the IP address mentioned at the bottom of the screen
