@@ -1,4 +1,3 @@
-
 {
   #Author - Rohan M. Nanaware
   #Date C.- 24th Mar 2018
@@ -56,14 +55,14 @@
 }# 01. Load libraries
 {
   
-  wd <- "C:/Users/rohan.nanaware/Documents/Rohan(local)/2 Non-Mu Sigma/Analyticsvidhya/Lord of the Machines Data Science Hackathon"
+  wd <- "E:/Delivery/1 Active/AnalyticsVidhya/Lord of the Machines- Data Science Hackathon"
   setwd(wd)
   
 }# 02. Set working directory
 {
-  train <- fread("train.csv", header = T, stringsAsFactors = F)
-  test  <- fread("test.csv", header = T, stringsAsFactors = F)
-  campaign_data <- fread("campaign_data.csv", header = T, stringsAsFactors = F)
+  train <- fread("./input data/train.csv", header = T, stringsAsFactors = F)
+  test  <- fread("./input data/test.csv", header = T, stringsAsFactors = F)
+  campaign_data <- fread("./input data/campaign_data.csv", header = T, stringsAsFactors = F)
 }# 03. Read data
 {
   
@@ -129,17 +128,17 @@
     train <- campaign_data[train, on = 'campaign_id']
     
     train <- train[, !c("campaign_id",
-                       "email_body",
-                       "subject",
-                       "email_url",
-                       "id",
-                       "user_id",
-                       "send_date",
-                       "is_open"),
+                        "email_body",
+                        "subject",
+                        "email_url",
+                        "id",
+                        "user_id",
+                        "send_date",
+                        "is_open"),
                    with = F]
     
     ohe_vars <- dummyVars(~ communication_type,
-                      data = train)
+                          data = train)
     train_ohe <- as.data.table(predict(ohe_vars, newdata = train))
     # head(data_ohe)
     train_enc <- cbind(train[, !c('communication_type'), with = F], train_ohe)
@@ -150,7 +149,7 @@
   
 }# 06. Prepare ADS - **for module 7**
 {
-  k = 5
+  k = 10
   #Divide the data into train and test
   set.seed(1007)
   train_data$ID <- sample(1:k, nrow(train_data), replace = T)
@@ -178,8 +177,8 @@
     )
     pred       <- predict(XGB_click, data.matrix(TEST.F))
     # hist(pred)
-    confusionMatrix(as.numeric(pred > 0.194), TEST.L$is_click)
-    error[i]        <- mean(as.numeric(pred > 0.22) != TEST.L$is_click)
+    confusionMatrix(as.numeric(pred > 0.197), TEST.L$is_click)
+    error[i]        <- mean(as.numeric(pred > 0.194) != TEST.L$is_click)
     print(paste('Progress = ', round(i/k,2)*100,"%", ' | Accuracy = ', round(1-error[i],4)*100, "%", sep = ""))
   }
   bias     <- mean(error)
@@ -222,12 +221,55 @@
                              'is_click' = test_data$is_click)
     write.csv(submission, './submissions/180330_sub_sfe_1.csv', row.names = F)
   }# XGB based submission - with is_open as predictor
+  {
+    train <- data.table(train)
+    train_email_response <- train[, list(emails_sent    = max(emails_sent),
+                                         emails_opened  = max(emails_opened),
+                                         emails_clicked = max(emails_clicked),
+                                         click_pec      = max(emails_clicked)/max(emails_opened),
+                                         open_pc        = max(emails_opened)/max(emails_sent)
+                                        ),
+                                  by = 'user_id']
+    test_data <- train_email_response[test, on = 'user_id']
+    # sapply(test_data, function(x) sum(is.na(x)))
+    # length(unique(test_data$user_id))
+    # length(unique(test_data$user_id[!is.na(test_data$emails_sent)]))
+    
+    test_data$emails_sent[is.na(test_data$emails_sent)] = 0
+    test_data$emails_opened[is.na(test_data$emails_opened)] = 0
+    test_data$emails_clicked[is.na(test_data$emails_clicked)] = 0
+    test_data$click_pec[is.na(test_data$click_pec)] = 0
+    test_data$open_pc[is.na(test_data$open_pc)] = 0
+    
+    test_data <- campaign_data[test_data, on = 'campaign_id']
+    
+    test_data <- test_data[, !c("campaign_id",
+                                "email_body",
+                                "subject",
+                                "email_url",
+                                "id",
+                                "user_id",
+                                "send_date"),
+                           with = F]
+    
+    ohe_vars <- dummyVars(~ communication_type,
+                          data = test_data)
+    test_data_ohe <- as.data.table(predict(ohe_vars, newdata = test_data))
+    # head(data_ohe)
+    test_data_enc <- cbind(test_data[, !c('communication_type'), with = F], test_data_ohe)
+    test_data <- test_data_enc
+    pred       <- predict(XGB_click, data.matrix(test_data))
+    submission <- data.frame('id' = test$id, 
+                             'is_click' = as.numeric(pred > 0.197))
+    write.csv(submission, './submissions/180331_sub_fe_5.csv', row.names = F)
+    
+  }# XBG based submission - with feature engineering(email response details)
   
 }# 08. Create submission
 {
   #Sensitivity vs specificity
   library(ROCR)
-  pred       <- predict(XGB_open, data.matrix(TEST.F))
+  pred       <- predict(XGB_click, data.matrix(TEST.F))
   pred <- data.frame(pred)
   colnames(pred)
   pred <- prediction(pred$pred, TEST.L$is_click)
@@ -326,7 +368,7 @@
     
     {
       train$send_date <- as.Date(strptime(train$send_date, "%d-%m-%Y %H:%S"), 
-                            format = "%Y-%m-%d")
+                                 format = "%Y-%m-%d")
       train <- sqldf('SELECT a.*,
                      count(distinct case when b.is_click = 1 then b.id end) as emails_clicked,
                      count(distinct case when b.is_open = 1 then b.id end) as emails_opened,
@@ -347,72 +389,29 @@
                               train$emails_opened / train$emails_sent,
                               0)
       
-      # test$send_date <- as.Date(strptime(test$send_date, "%d-%m-%Y %H:%S"), 
-      #                       format = "%Y-%m-%d")
-      # test <- sqldf('SELECT a.*,
-      #               count(distinct b.id) as emails_sent
-      #               --b.id as right_id
-      #               --a.id, a.user_id, count(distinct b.id)
-      #               FROM test a
-      #               LEFT JOIN
-      #               test b
-      #               ON a.user_id = b.user_id and
-      #               a.send_date > b.send_date
-      #               GROUP BY a.id, a.user_id, a.campaign_id, a.send_date
-      #               ')
-      # 
-      # data_emails_sent_count <- sqldf('SELECT a.id,
-      #                                 count(distinct b.id) as emails_sent
-      #                                 --b.id as right_id
-      #                                 --a.id, a.user_id, count(distinct b.id)
-      #                                 FROM data a
-      #                                 LEFT JOIN
-      #                                 data b
-      #                                 ON a.user_id = b.user_id and
-      #                                 a.send_date > b.send_date
-      #                                 GROUP BY a.id
-      #                                 --a.communication_type, a.total_links, 
-      #                                 --a.no_of_internal_links, a.no_of_images, a.no_of_sections,
-      #                                 --a.email_body, a.subject, a.email_url, a.id, a.user_id,
-      #                                 --a.send_date, a.df_flag
-      #                                 ')
-      # 
-      # data_emails_sent_count <- data.table(data_emails_sent_count)
-      # data <- data_emails_sent_count[data, on = 'id']
-      # nrow(data)
-      
-      # temp <- sqldf('SELECT * 
-      #               FROM train a
-      #               inner join
-      #               test b
-      #               on a.user_id = b.user_id')
-      # View(temp)
-      
-      # re-run module 6, 7
     }# count of emails sent, opened, clicked by a customer till date, email open %, email click %
     {
-    
-    train <- campaign_data[train, on = 'campaign_id']
-    
-    train <- train[, !c("campaign_id",
-                       "email_body",
-                       "subject",
-                       "email_url",
-                       "id",
-                       "user_id",
-                       "send_date",
-                       "is_open"),
-                   with = F]
-    
-    ohe_vars <- dummyVars(~ communication_type,
-                      data = train)
-    train_ohe <- as.data.table(predict(ohe_vars, newdata = train))
-    # head(data_ohe)
-    train_enc <- cbind(train[, !c('communication_type'), with = F], train_ohe)
-    train_data <- train_enc
-    #test_data  <- data_enc[df_flag == 'test', !'df_flag', with = F]
-    
-  }# run ohe only on train data **run post the feature enginnering - click, open, sent, click-open pc**
+      
+      train <- campaign_data[train, on = 'campaign_id']
+      
+      train <- train[, !c("campaign_id",
+                          "email_body",
+                          "subject",
+                          "email_url",
+                          "id",
+                          "user_id",
+                          "send_date",
+                          "is_open"),
+                     with = F]
+      
+      ohe_vars <- dummyVars(~ communication_type,
+                            data = train)
+      train_ohe <- as.data.table(predict(ohe_vars, newdata = train))
+      # head(data_ohe)
+      train_enc <- cbind(train[, !c('communication_type'), with = F], train_ohe)
+      train_data <- train_enc
+      
+    }# run ohe only on train data **run post the feature enginnering - click, open, sent, click-open pc**
     
   }#email response details
   
