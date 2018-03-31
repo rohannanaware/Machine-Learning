@@ -364,7 +364,7 @@
       # View(temp)
       
       # re-run module 6, 7
-    }# count of emails sent of a customer till date
+    }# count of emails sent of a customer till date **do not run**
     
     {
       train$send_date <- as.Date(strptime(train$send_date, "%d-%m-%Y %H:%S"), 
@@ -545,4 +545,15 @@
     test_data$is_click           <- as.numeric(test_data$is_click > 0.21)
     
   }#apply XGB_open and XGB_click on test data
-}# 11. Feature engineering
+}# 11. Feature engineering **using email open propensity to predict click propensity**
+{
+  # 2.b Email attributes
+  #     Effect of time of day and day of week on email open and click rate
+  View(head(train))
+  train <- campaign_data[train, on = "campaign_id"]
+  train$send_date <- strptime(train$send_date, "%d-%m-%Y %H:%S")
+  train$weekday   <- weekdays(train$send_date)
+  train$hourofday <- hour(train$send_date)
+  
+ 
+}# 12. EDA
