@@ -52,9 +52,10 @@
 <h3>Lesson 2 : 2A-L2 Filtering</h3>
 
 * Gaussian Noise
+
 <img src = "http://www.gergltd.com/cse486/project2/GaussianNoise.jpg"
      alt = "Gaussian Noise"
-     style = "float: left; margin-right: 40px;"
+     style = "float: right; margin-right: 40px;"
      />
      
      
