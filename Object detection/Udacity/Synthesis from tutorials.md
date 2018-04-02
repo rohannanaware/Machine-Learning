@@ -58,6 +58,18 @@
      style = "float: right; margin-right: 40px;"
      />
      
-     
    * Smoothening the pixel intensity can reduce noise of the Pixel. Take average of surrounding Pixels and assign to that Pixel
+   
+* Weighted moving average
+   * Closer pixels are more likely to be similar in intensity to the given Pixel. Hence more nearby the Pixel the more weight it should have
+   
+* Moving Average in 2D
+   * An average of the matrix of values whose size is lower than the size of image
+   
+* Correlation Filtering
+   * Use of kernels to assign non-uniform weights to be multiplied to each of the Pixel before being averaged out
+   * kernel is a matrix of weights wherein the innermost entries have highest value
+   
+   
+
 
