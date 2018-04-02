@@ -36,3 +36,5 @@
 * Digital images
    * In computer vision we work on digital(discrete) images
 
+
+
