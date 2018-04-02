@@ -26,3 +26,17 @@
 * Before feeding into CNNs a process called **selective search** is used to create a set of bounding boxes or region proposals
 * Selective search looks at the image through windowsof different sizes and each size tries to group pixels by texture, color, intensity to identify objects
  * Input image >> Extract region proposals >> Compute CNN features >> Classify regions, objects within regions
+
+<h3>Using YOLO for Object detection</h3>
+
+* Divides the image into a gride of 13 x 13 cells. Each cell is responsible for predicting 5 bounding boxes
+* Bounding box describes a rectangle that encloses an object
+* Also outputs a confidence score that the predicted bounding box encloses an object. Higher confidence score. Fatter the box
+* For each bounding box the cell also outputs a class
+* Confidence scores and bounding boxes are combined to tell which object a bounding box contains
+* Further reading - 
+ * [Darknet](https://pjreddie.com/darknet/)
+ * [General steps to use Darknet](https://pjreddie.com/darknet/yolo/)
+ * [Darkflow - translate Darknet to tensorflow version](https://github.com/thtrieu/darkflow)
+ * [Darkflow - Siraj version](https://github.com/llSourcell/YOLO_Object_Detection)
+  
