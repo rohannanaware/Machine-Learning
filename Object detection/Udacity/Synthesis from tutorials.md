@@ -16,9 +16,8 @@
  * Object recognition - 
     * Evolution robotics - LaneHawk
 
-<h3>Lesson 2 : 2A-L1</h3>
+<h3>Lesson 2 : 2A-L1 Images as functions</h3>
 
-* Images as functions - intro
 * Images as functions - Part 1
    * I(x, y)
       * x, y = co-ordinates of a grayscaled image
@@ -45,3 +44,19 @@
    * Salt and pepper noise - Random black and white pixels
    * Impulse noise - random occurences of white pixels
    * Gaussian noise - Variations in intensity drawn from a Gaussian normal distribution
+
+* Applying Gaussian Noise
+   * Gaussian noise is derieved from Gaussian distribution, mean = 0, std. dev = 1
+   * Multoplying the Gaussian dist. with a contanst changes the spread of dist. since frequency remains unchanged
+
+<h3>Lesson 2 : 2A-L2 Filtering</h3>
+
+* Gaussian Noise
+<img src = "http://www.gergltd.com/cse486/project2/GaussianNoise.jpg"
+     alt = "Gaussian Noise"
+     style = "float: left; margin-right: 40px;"
+     />
+     
+     
+   * Smoothening the pixel intensity can reduce noise of the Pixel. Take average of surrounding Pixels and assign to that Pixel
+
