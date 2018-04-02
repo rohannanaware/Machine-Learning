@@ -19,3 +19,10 @@
 <h3>Using CNNs for Object detection</h3>
 
 * **Brute force** - Train the model to detect a particular object. Slide the classifier across a group of Pixels across the whole image and classify every single Box and take the classifications which the model has high confidence on
+* Better approach was RCNNs
+
+<h3>Using RCNNs for Object detection</h3>
+
+* Before feeding into CNNs a process called **selective search** is used to create a set of bounding boxes or region proposals
+* Selective search looks at the image through windowsof different sizes and each size tries to group pixels by texture, color, intensity to identify objects
+ * Input image >> Extract region proposals >> Compute CNN features >> Classify regions, objects within regions
