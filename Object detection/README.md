@@ -15,7 +15,7 @@
 **Human**
 * **Video Capture** - OpenCV
 * **Detection** - Reinspect
-* **Tracking** HOG, HAAR, MHT
+* **Tracking** - HOG, HAAR, MHT
 
 **Baggage**
 * **Detection** - Reinspect, YOLO(Single-/ Multi - class)
