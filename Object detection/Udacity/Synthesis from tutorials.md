@@ -1,5 +1,3 @@
-
-
 <h3>Lesson 1 : 1A-L1</h3>
 
 * Computer vision and Computer Photography
@@ -36,5 +34,14 @@
 * Digital images
    * In computer vision we work on digital(discrete) images
 
-
-
+* Image operations
+   * Addition
+   * Averaging
+   * Scalar multiplication
+   * Blending
+   
+* Common types of Noise
+   * I'(x, y) = I(x, y) + noise(x, y)
+   * Salt and pepper noise - Random black and white pixels
+   * Impulse noise - random occurences of white pixels
+   * Gaussian noise - Variations in intensity drawn from a Gaussian normal distribution
