@@ -9,12 +9,13 @@
 * Follow this [link](https://www.hackster.io/peter-lunk/how-to-use-the-android-ip-webcam-app-with-python-opencv-45f28f) to create your python code
 
 
+
 <h3>Workflow for human and baggage detection</h3>
 
-Human
+**Human**
 * **Video Capture** - OpenCV
 * **Detection** - Reinspect
 * **Tracking** HOG, HAAR, MHT
 
-Baggage
+**Baggage**
 * **Detection** - Reinspect, YOLO(Single-/ Multi - class)
