@@ -20,9 +20,14 @@
 **Baggage**
 * **Detection** - Reinspect, YOLO(Single-/ Multi - class)
 
+<h3>Action items</h3> 
 * Research up on
   * [**RNNs**](https://wiki.tum.de/display/lfdv/Recurrent+Neural+Networks+-+Combination+of+RNN+and+CNN)
   * [RCNNs](https://towardsdatascience.com/learn-rcnns-with-this-toy-dataset-be19dce380ec)
   * RNN vs CNN vs RCNN
   * [**Darknet**](https://pjreddie.com/darknet/)
   * [Detectron](https://github.com/facebookresearch/Detectron)
+
+* Setup YOLO by researching on the codes
+* Read up on OpenCV documentation
+* Introduction to computer vision courese Udemy
