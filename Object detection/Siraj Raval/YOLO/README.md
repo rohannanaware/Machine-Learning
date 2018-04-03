@@ -36,7 +36,7 @@
 * Confidence scores and bounding boxes are combined to tell which object a bounding box contains
 * Further reading - 
   * [Darknet](https://pjreddie.com/darknet/)
-  * [General steps to use Darknet](https://pjreddie.com/darknet/yolo/)
+  * [YOLO](https://pjreddie.com/darknet/yolo/)
   * [Darkflow - translate Darknet to tensorflow version](https://github.com/thtrieu/darkflow)
   * [Darkflow - Siraj version](https://github.com/llSourcell/YOLO_Object_Detection)
   
