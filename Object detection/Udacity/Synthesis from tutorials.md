@@ -69,3 +69,23 @@
    * Use of kernels to assign non-uniform weights to be multiplied to each of the Pixel before being averaged out
    * kernel is a matrix of weights wherein the innermost entries have highest value
    
+* Gaussian filter
+   * Nearest neighbouring pixels have the most influence
+   * The Gaussian kernel is an approximation of the [Gaussian function](https://en.wikipedia.org/wiki/Gaussian_function)
+   * <img src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Normal_Distribution_PDF.svg/360px-Normal_Distribution_PDF.svg.png"
+     alt = "Gaussian Noise"
+     style = "float: right; margin-right: 40px;"
+     />
+   * <img src = "https://lh6.googleusercontent.com/sD9KLYLY7Hne9YlCzYgKw7-FaE_Dh201JlO0I1czRc3fBXyRVV7in5Jfq5QEoyJFoypOgPV8_bLHdWdQ0bUGa03B544STlFSksMDTTLIADNsyM4JStM"
+     alt = "Gaussian Noise"
+     style = "float: right; margin-right: 40px;"
+     />
+     
+* Variance or standard deviation
+   * Gaussian is isotropic meaning circularly symmetric. It had only one parameter(sigma), higher the sigma larger the blur
+   * Variance in Gaussian filters determines the extent of smoothening
+   * Kernels with same size and different sigma
+   * For kernels with different size but same sigma, the one with larger size tends to perform better as it is smoother
+   * Details on effect of kernel size and sigma on the quality of [smoothening](https://classroom.udacity.com/courses/ud810/lessons/3417359075/concepts/34235689660923)
+   * *Why do I need to apply smoothening? - To remove random noise in the image*
+   
