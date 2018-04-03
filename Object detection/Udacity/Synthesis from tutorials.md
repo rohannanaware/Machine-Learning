@@ -88,4 +88,8 @@
    * For kernels with different size but same sigma, the one with larger size tends to perform better as it is smoother
    * Details on effect of kernel size and sigma on the quality of [smoothening](https://classroom.udacity.com/courses/ud810/lessons/3417359075/concepts/34235689660923)
    * *Why do I need to apply smoothening? - To remove random noise in the image*
+   * When filtering with Gaussian below things are most important - 
+      * Sigma - It defines the blur kernels scale with respect to the image
+      * Normalization coefficient - Does not affect the blur, only the brightness
+   
    
