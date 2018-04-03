@@ -21,7 +21,8 @@
 * **Detection** - Reinspect, YOLO(Single-/ Multi - class)
 
 <h3>Action items</h3> 
-* Research up on
+* Research upon
+
   * [**RNNs**](https://wiki.tum.de/display/lfdv/Recurrent+Neural+Networks+-+Combination+of+RNN+and+CNN)
   * [RCNNs](https://towardsdatascience.com/learn-rcnns-with-this-toy-dataset-be19dce380ec)
   * RNN vs CNN vs RCNN
