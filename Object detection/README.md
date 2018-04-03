@@ -19,3 +19,8 @@
 
 **Baggage**
 * **Detection** - Reinspect, YOLO(Single-/ Multi - class)
+
+* Research up on
+  * [RNNs](https://wiki.tum.de/display/lfdv/Recurrent+Neural+Networks+-+Combination+of+RNN+and+CNN)
+  * [RCNNs](https://towardsdatascience.com/learn-rcnns-with-this-toy-dataset-be19dce380ec)
+  * RNN vs CNN vs RCNN
