@@ -51,13 +51,12 @@
 
 <h3>Lesson 2 : 2A-L2 Filtering</h3>
 
-* Gaussian Noise
-
 <img src = "http://www.gergltd.com/cse486/project2/GaussianNoise.jpg"
      alt = "Gaussian Noise"
      style = "float: right; margin-right: 40px;"
      />
-     
+
+* Gaussian Noise
    * Smoothening the pixel intensity can reduce noise of the Pixel. Take average of surrounding Pixels and assign to that Pixel
    
 * Weighted moving average
@@ -70,6 +69,3 @@
    * Use of kernels to assign non-uniform weights to be multiplied to each of the Pixel before being averaged out
    * kernel is a matrix of weights wherein the innermost entries have highest value
    
-   
-
-
