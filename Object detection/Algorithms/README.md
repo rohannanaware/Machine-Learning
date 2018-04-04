@@ -1,1 +1,1 @@
-[Retinanet github page](https://github.com/fizyr/keras-retinanet)
+[RetinaNet github page](https://github.com/fizyr/keras-retinanet)
