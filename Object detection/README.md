@@ -43,7 +43,7 @@
 * [Retinanet](https://www.youtube.com/watch?v=44tlnmmt3h0)
 
 
-<h3>**Fun ideas**</h3>
+<h3>Fun ideas</h3>
 
-* Automated tagging
+* **Automated tagging**
   * Use detection algorithm to generate tags - percept creates an annotations.dll file to create list of tags
