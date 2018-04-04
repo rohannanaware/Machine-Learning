@@ -29,10 +29,12 @@
   * RNN vs CNN vs RCNN
   * [**Darknet**](https://pjreddie.com/darknet/)
   * [Detectron](https://github.com/facebookresearch/Detectron)
+  * 2 stage vs. single stage object detection(RNNs vs YOLO)
 
 * Setup YOLO by researching on the codes
 * Read up on OpenCV documentation
 * Introduction to computer vision courese Udacity
+
 
 <h3>Important links</h3>
 
