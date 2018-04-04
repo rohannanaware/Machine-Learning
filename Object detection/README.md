@@ -45,6 +45,5 @@
 
 <h3></h3>
 
-* Fun ideas - Automated tagging
-
- * Use detection algorithm to create tags - percept creates an annotations.dll file to create list of tags
+* **Fun ideas**
+  * Automated tagging - Use detection algorithm to generate tags - percept creates an annotations.dll file to create list of tags
