@@ -41,3 +41,8 @@
 * [Link to download videos](https://www.videezy.com/)
 * [Object recognition process](https://www.quora.com/Computer-Vision-What-are-the-fastest-object-recognition-algorithms-in-Python)
 * [Retinanet](https://www.youtube.com/watch?v=44tlnmmt3h0)
+
+
+<h3></h3>
+* Fun ideas - Automated tagging
+ * Use detection algorithm to create tags - percept creates an annotations.dll file to create list of tags
