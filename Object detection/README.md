@@ -24,6 +24,7 @@
 * Research upon
 
   * [**RNNs**](https://wiki.tum.de/display/lfdv/Recurrent+Neural+Networks+-+Combination+of+RNN+and+CNN)
+  * [RNNs and LSTM](https://en.wikipedia.org/wiki/Recurrent_neural_network)
   * [RCNNs](https://towardsdatascience.com/learn-rcnns-with-this-toy-dataset-be19dce380ec)
   * RNN vs CNN vs RCNN
   * [**Darknet**](https://pjreddie.com/darknet/)
