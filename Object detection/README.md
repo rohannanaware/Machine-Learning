@@ -32,3 +32,7 @@
 * Setup YOLO by researching on the codes
 * Read up on OpenCV documentation
 * Introduction to computer vision courese Udacity
+
+<h3>Important links</h3>
+
+* [Link to download videos](https://www.videezy.com/)
