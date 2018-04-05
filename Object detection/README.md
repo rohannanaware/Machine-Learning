@@ -34,6 +34,7 @@
 * Setup YOLO by researching on the codes
 * Read up on OpenCV documentation
 * Introduction to computer vision courese Udacity
+* What is a weak learner? How does learning process actually happen in tree based techniques? What is updated by the learning rate?
 
 
 <h3>Important links</h3>
