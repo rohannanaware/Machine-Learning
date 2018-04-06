@@ -30,6 +30,7 @@
   * [**Darknet**](https://pjreddie.com/darknet/)
   * [Detectron](https://github.com/facebookresearch/Detectron)
   * 2 stage vs. single stage object detection(RNNs vs YOLO)
+  * [An Intuitive Guide to Deep Network Architectures](https://towardsdatascience.com/an-intuitive-guide-to-deep-network-architectures-65fdc477db41)
 
 * Setup YOLO by researching on the codes
 * Read up on OpenCV documentation
