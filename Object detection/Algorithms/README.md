@@ -89,12 +89,20 @@
  * <img src = "http://cv-tricks.com/wp-content/uploads/2016/12/CNN.png"/>
  * Major drawback is that it's difficult to perform back propogation through the spatial pooling layer
 
+# 4. Fast R-CNN
 
-  
+# 5. Faster R-CNN
 
+# Regression-based object detectors
+* Classification based object detectors first generate object proposals which are later sent into classification or regression heads
+* Few methods pose detection as a regression problem. Two of the most popular ones are YOLO and SSD
 
+# 6. YOLO(You only Look Once)
+* YOLO divides each image into a grid of S x S and each grid predicts N bounding boxes and confidence
+* The confidence reflects the accuracy of the bounding box and whether the bounding box actually contains an object(regardless of class)
+* YOLO also predicts the classification score for each box for every class in training. You can combine both the classes to calculate the probability of each class being present in a predicted box
+* <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/model2-1024x280.jpg"/>
 
+# 7. Single Shot Detector(SSD)
 
-
-
-
+* SSD runs a convolutional network on input image only once and calculates a feature map
