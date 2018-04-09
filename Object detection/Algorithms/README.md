@@ -96,6 +96,8 @@
 
 # 5. Faster R-CNN
 
+- 2 stage RCNN meaning
+
 # Regression-based object detectors
 * Classification based object detectors first generate object proposals which are later sent into classification or regression heads
 * Few methods pose detection as a regression problem. Two of the most popular ones are YOLO and SSD
