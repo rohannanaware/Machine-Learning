@@ -40,8 +40,11 @@
   
 # Multi - class vs. multi - label classification
 
-- [Link - stackexchange](https://stats.stackexchange.com/questions/11859/what-is-the-difference-between-multiclass-and-multilabel-problem)
-- [Link - scikit-learn](http://scikit-learn.org/stable/modules/multiclass.html)
+- [Stackexchange](https://stats.stackexchange.com/questions/11859/what-is-the-difference-between-multiclass-and-multilabel-problem)
+- [Scikit-learn](http://scikit-learn.org/stable/modules/multiclass.html)
+- [Measure of accracy for multi-label model](https://stats.stackexchange.com/questions/12702/what-are-the-measure-for-accuracy-of-multilabel-data)
+- [Solving Multi-Label Classification problems (Case studies included)](https://www.analyticsvidhya.com/blog/2017/08/introduction-to-multi-label-classification/)
+- [Ml-knn: A Lazy Learning Approach to Multi-Label Learning](https://cs.nju.edu.cn/zhouzh/zhouzh.files/publication/pr07.pdf)
 
 * **Multiclass classification** means a classification task with more than two classes; e.g., classify a set of images of fruits which may be oranges, apples, or pears. Multiclass classification makes the assumption that each sample is assigned to one and only one label: a fruit can be either an apple or a pear but not both at the same time
 * **Multilabel classification** assigns to each sample a set of target labels. This can be thought as predicting properties of a data-point that are not mutually exclusive, eg. an image of cat and dog together
@@ -106,3 +109,7 @@
 # 7. Single Shot Detector(SSD)
 
 * SSD runs a convolutional network on input image only once and calculates a feature map
+
+# 8. RetinaNet
+* Reference links - 
+
