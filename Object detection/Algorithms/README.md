@@ -8,9 +8,9 @@
 
 # RetinaNet
 
-* [RetinaNet github page](https://github.com/fizyr/keras-retinanet)
-
-* [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
+* Reference links
+  * [RetinaNet github page](https://github.com/fizyr/keras-retinanet)
+  * [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
 
 * The highest accuracy object detectors to date are based on a **two-stage approach popularized by R-CNN**, where a classifier is applied to a sparse set of candidate object locations
 * In contrast, one-stage detectors that are applied over a regular, dense sampling of possible object locations have the potential to be faster and simpler, but have trailed the accuracy of two-stage detectors thus far
@@ -48,3 +48,21 @@
 * **Multioutput-multiclass classification and multi-task classification** means that a single estimator has to handle several joint classification tasks. This is both a generalization of the multi-label classification task, which only considers binary classification, as well as a generalization of the multi-class classification task. The output format is a 2d numpy array or sparse matrix
   * The set of labels can be different for each output variable. For instance, a sample could be assigned “pear” for an output variable that takes possible values in a finite set of species such as “pear”, “apple”; and “blue” or “green” for a second output variable that takes possible values in a finite set of colors such as “green”, “red”, “blue”, “yellow”…
   * This means that any classifiers handling multi-output multiclass or multi-task classification tasks, support the multi-label classification task as a special case. Multi-task classification is similar to the multi-output classification task with different model formulations. For more information, see the relevant estimator documentation
+
+# Object detection techniques
+
+* **Object detection is modelled as a classification problem where we take windows of fixed sizes from input image at all possible locations and feed these patches into an image classifier**
+* <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/Sliding-window.gif"/>
+* How to determine the size of window - 
+  * Idea is that we resize the image at multiple scales and we count on the fact that our chosen window size will completely contain the object in one of these resized images
+  * Image pyramid is created by scaling the image:
+  * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/pyramid-269x300.png"/>
+* How do we deal with aspect ratio?
+
+# 1. Object detection using Hog features
+
+* On each window obtained from running the sliding window on the pyramid, we calculate Hog Features which are fed to an SVM(Support vector machine) to create classifiers
+
+# 2. Region-based Convolutional Neural Networks(R-CNN)
+
+
