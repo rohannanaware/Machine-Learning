@@ -1,6 +1,5 @@
-[RetinaNet github page](https://github.com/fizyr/keras-retinanet)
+# HAAR Cascades
 
-HAAR Cascades
 * [Summary](https://pdfs.semanticscholar.org/0f1e/866c3acb8a10f96b432e86f8a61be5eb6799.pdf)
 * [Haar-like feature](https://en.wikipedia.org/wiki/Haar-like_feature)
 * [Face Detection using Haar Cascades ](https://docs.opencv.org/3.4.1/d7/d8b/tutorial_py_face_detection.html)
@@ -9,7 +8,9 @@ HAAR Cascades
 
 # RetinaNet
 
-[Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
+* [RetinaNet github page](https://github.com/fizyr/keras-retinanet)
+
+* [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
 
 * The highest accuracy object detectors to date are based on a **two-stage approach popularized by R-CNN**, where a classifier is applied to a sparse set of candidate object locations
 * In contrast, one-stage detectors that are applied over a regular, dense sampling of possible object locations have the potential to be faster and simpler, but have trailed the accuracy of two-stage detectors thus far
