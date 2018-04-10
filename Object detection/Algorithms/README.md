@@ -64,19 +64,45 @@
   * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/pyramid-269x300.png"/>
 * How do we deal with aspect ratio - person sitting vs. standing?
 * **[Region Proposal Algorithms](https://www.learnopencv.com/selective-search-for-object-detection-cpp-python/)**
-  * Takes an image as the input and output bounding boxes corresponding to all patches in an image that are most likely to be objects
+  * Takes an image as the input and output **bounding boxes corresponding to all patches in an image that are most likely to be objects**
   * <img src = "https://www.learnopencv.com/wp-content/uploads/2017/10/object-recognition-false-positives-true-positives.jpg"/>
   * These region proposals can be noisy, overlapping and may not contain the object perfectly but amongst these region proposals, there will be a proposal which will be very close to the actual object in the image
-  * The region proposals are furhter classified using any classification model and the one with highest probability score is used to identify the location of the object
-  * Unlike the sliding window approach where we are looking for the object at all pixel locations and at all scales, region proposal algorithm work by grouping pixels into a smaller number of segments. This reduces the number of image patches we have to classify
+  * The region proposals are furhter classified using any classification model and the one with **highest probability score is used to identify the location of the object**
+  * Unlike the sliding window approach where we are looking for the object at all pixel locations and at all scales, region proposal algorithm work by **grouping pixels into a smaller number of segments(segmentation)**. This reduces the number of image patches we have to classify
   * In segmentation, we group adjacent regions which are similar to each other based on some criteria such as color, texture etc
-  * The idea is to have a high recall at the cost of false positives as they can be eliminated using filtering based on probability score in the object classification stage. Approaches used - 
+  * The idea is to have a **high recall** at the cost of false positives as they can be eliminated using filtering based on probability score in the object classification stage. Approaches used - 
     1. [Objectness](http://groups.inf.ed.ac.uk/calvin/objectness/)
     2. [Constrained Parametric Min-Cuts for Automatic Object Segmentation](http://www.maths.lth.se/matematiklth/personal/sminchis/code/cpmc/index.html)
     3. [Category Independent Object Proposals](http://vision.cs.uiuc.edu/proposals/)
     4. [Randomized Prim](http://www.vision.ee.ethz.ch/~smanenfr/rp/index.html)
     5. [Selective Search](http://koen.me/research/selectivesearch/)
   * **Selective Search for Object Recognition**
+    * Reference links - 
+      * [Link - Stanford *good visuals*](http://vision.stanford.edu/teaching/cs231b_spring1415/slides/ssearch_schuyler.pdf)
+    * Selective Search is a region proposal algorithm that computes hierarchical grouping of similar regions based on color, texture, size and shape compatibility
+    * Selective Search starts by **over-segmenting the image based on intensity of the pixels using a graph-based [segmentation method](http://cs.brown.edu/~pff/segment/) by Felzenszwalb and Huttenlocher**. The image on the right contains segmented regions represented using solid colors:
+    * <img src = "https://www.learnopencv.com/wp-content/uploads/2017/09/breakfast-300x200.jpg"/> <img src = "https://www.learnopencv.com/wp-content/uploads/2017/09/breakfast_fnh-300x200.jpg"/>
+    * These segments can't be directly used to create region proposals since -
+      1. Most of the actual objects in the original image contain 2 or more segmented parts
+      2. Region proposals for occluded objects such as the plate covered by the cup or the cup filled with coffee cannot be generated using this method
+    * Selective search uses oversegments from Felzenszwalb and Huttenlocher’s method as an initial seed. An oversegmented image looks like this:
+    * <img src = "https://www.learnopencv.com/wp-content/uploads/2017/09/breakfast_oversegment-300x200.jpg"/>
+    * Selective Search algorithm takes these oversegments as initial input and performs the following steps - 
+      1. Add all bounding boxes corresponding to segmented parts to the list of regional proposals
+      2. Group adjacent segments based on similarity
+      3. Repeat
+    * This image shows the initial, middle and last step of the **hierarchical segmentation process**:
+      * <img src = "https://www.learnopencv.com/wp-content/uploads/2017/09/hierarchical-segmentation-1.jpg"/>
+    * How is similarity calculated?
+      * Selective Search uses 4 similarity measures based on **color, texture, size and shape compatibility**
+        * **Color similarity**:
+          * A color histogram of 25 bins is calculated for each channel of the image and histograms for all channels are concatenated to obtain a color descriptor resulting into a 25×3 = 75-dimensional color descriptor
+          * Color similarity of two regions is based on histogram intersection and can be calculated as:
+            * <img src = "https://www.learnopencv.com/wp-content/ql-cache/quicklatex.com-3a99604c3b9fc1664b0ebd9b16aa190c_l3.png"/>
+          * c^k_i is the histogram value for k^{th} bin in color descriptor
+        * **Texture Similarity**
+          * 
+      
 
 # 1. Object detection using Hog features
 
