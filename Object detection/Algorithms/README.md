@@ -14,7 +14,7 @@
 
 * The highest accuracy object detectors to date are based on a **two-stage approach popularized by R-CNN**, where a classifier is applied to a sparse set of candidate object locations
 * In contrast, one-stage detectors that are applied over a regular, dense sampling of possible object locations have the potential to be faster and simpler, but have trailed the accuracy of two-stage detectors thus far
-* In this paper, we investigate why this is the case - 
+* In this paper(2nd link), we investigate why this is the case - 
   * We discover that the **extreme foreground-background class imbalance** encountered during training of dense detectors is the central cause
 * We propose to address this class imbalance by reshaping the **standard cross entropy loss** such that it down-weights the loss assigned to well-classified examples
 * Our novel Focal Loss focuses training on a **sparse set of hard examples** and prevents the vast number of easy negatives from **overwhelming the detector** during training
@@ -23,8 +23,8 @@
 
 # Using CNN for object detection
 
-[Link](http://cv-tricks.com/object-detection/faster-r-cnn-yolo-ssd/)
-
+* Reference links - 
+  * [Link - Zero to Hero: Guide to Object Detection using Deep Learning: Faster R-CNN,YOLO,SSD](http://cv-tricks.com/object-detection/faster-r-cnn-yolo-ssd/)
 * An image classifier can tell whether an image is cat or dog. If both are present in the same image then we use a multi-label classifier to assign multiple labels to the image. This does not tell the location of the image
 * Identifying the location of an object(given the class) in an image is called as **localization**. If the object class is not known, we have to not only determine the location but also predict the class of each object
 * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/detection-vs-classification-300x220.png"/>
@@ -60,13 +60,29 @@
   * Idea is that we resize the image at multiple scales and we count on the fact that our chosen window size will completely contain the object in one of these resized images
   * Image pyramid is created by scaling the image:
   * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/pyramid-269x300.png"/>
-* How do we deal with aspect ratio?
+* How do we deal with aspect ratio - person sitting vs. standing?
 
 # 1. Object detection using Hog features
 
-* On each window obtained from running the sliding window on the pyramid, we calculate Hog Features which are fed to an SVM(Support vector machine) to create classifiers
 * Reference links:
  * [Wiki](https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients)
+ * [Filtering and Enhancing Images](https://courses.cs.washington.edu/courses/cse576/book/ch5.pdf)
+* <img src = "http://cdn-ak.f.st-hatena.com/images/fotolife/c/cool_on/20160122/20160122182347.png"/>v <img src = "http://cdn-ak.f.st-hatena.com/images/fotolife/c/cool_on/20160122/20160122182350.png"/>
+* On each window obtained from running the sliding window on the pyramid, we calculate Hog Features which are fed to an SVM(Support vector machine) to create classifiers
+* The technique counts occurrences of gradient orientation in localized portions of an image
+* The essential thought behind the histogram of oriented gradients descriptor is that local **object appearance and shape within an image** can be described by the distribution of **intensity gradients or edge directions**
+* The image is divided into small connected regions called **cells**, and for the pixels within each cell, a **histogram of gradient directions** is compiled. The descriptor is the concatenation of these histograms
+* For improved accuracy, the local histograms can be contrast-normalized by calculating **a measure of the intensity across a larger region of the image**, called a block, and then using this value to normalize all cells within the block. This normalization results in better **invariance to changes in illumination and shadowing**
+* Advantages:
+  * Invariant to geometric or photometric transformations(since it operates on localized cells)
+* Disadvantages:
+  * Prone to change in object orientation
+* Questions:
+  * *Q. How is object orientation change different than geometric transformations*
+  * *Q. What is the difference between the HOG approach from HAAR cascades?*
+* Next steps:
+  * Read theory from other links
+  * Read up more on the implementation part
  
 # 2. Region-based Convolutional Neural Networks(R-CNN)
 
@@ -88,8 +104,7 @@
   * An SPP layer is added on top of the last convolutional layer
   * The SPP layer pools the features and generates fixedlength outputs, which are then fed into the fullyconnected layers (or other classifiers)
   *  In other words, we perform some information “aggregation” at a deeper stage of the network hierarchy (between convolutional layers and fully-connected layers) to avoid the need for cropping or warping at the beginning
-  
- * <img src = "http://cv-tricks.com/wp-content/uploads/2016/12/CNN.png"/>
+ * <img src = "http://cv-tricks.com/wp-content/uploads/2016/12/CNN.png"/> 
  * Major drawback is that it's difficult to perform back propogation through the spatial pooling layer
 
 # 4. Fast R-CNN
