@@ -101,8 +101,29 @@
             * <img src = "https://www.learnopencv.com/wp-content/ql-cache/quicklatex.com-3a99604c3b9fc1664b0ebd9b16aa190c_l3.png"/>
           * c^k_i is the histogram value for k^{th} bin in color descriptor
         * **Texture Similarity**
-          * 
-      
+          * Texture features are calculated by extracting Gaussian derivatives at 8 orientations for each channel. For each orientation and for each color channel, a 10-bin histogram is computed resulting into a 10x8x3 = 240-dimensional feature descriptor
+          * Texture similarity of two regions is also calculated using histogram intersections:
+            * <img src = "https://www.learnopencv.com/wp-content/ql-cache/quicklatex.com-169d419080f56b69f9645cd13ee5b0ac_l3.png"/>
+          * t^k_i is the histogram value for k^{th} bin in texture descriptor
+        * **Size Similarity**
+          * We want small regions to merge into larger ones, to create a balanced hierarchy
+          * Size similarity encourages smaller regions to merge early. It ensures that region proposals at all scales are formed at all parts of the image
+          * If this similarity measure is not taken into consideration a single region will keep gobbling up all the smaller adjacent regions one by one and hence region proposals at multiple scales will be generated at this location only
+          * Size similarity is defined as:
+            * <img src = "https://www.learnopencv.com/wp-content/ql-cache/quicklatex.com-ed6bd32a9661aa84228d1ca1c75f5d29_l3.png"/>
+          * where size(im) is size of image in pixels
+        * **Shape Compatibility**
+          * Shape compatibility measures how well two regions (r_i and r_j) fit into each other. If r_i fits into r_j we would like to merge them in order to fill gaps and if they are not even touching each other they should not be merged
+          * Shape compatibility is defined as:
+            * <img src = "https://www.learnopencv.com/wp-content/ql-cache/quicklatex.com-9a3fdf638488b3c77915b9b83bf2f3e1_l3.png"/>
+          * where size(BB{ij}) is a bounding box around r_i and r_j
+        * **Final Similarity**
+          * The final similarity between two regions is defined as a linear combination of aforementioned 4 similarities:
+            * <img src = "https://www.learnopencv.com/wp-content/ql-cache/quicklatex.com-67a3c5c3f45a9407ee513056c759f095_l3.png"/>
+          * where r_i and r_j are two regions or segments in the image and a_i \in {0, 1} denotes if the similarity measure is used or not
+        * **Results**
+          * Selective Search implementation in OpenCV gives thousands of region proposals arranged in decreasing order of objectness. For clarity, we are sharing results with top 200-250 boxes drawn over the image. In general 1000-1200 proposals are good enough to get all the correct region proposals
+          * <img src = "https://www.learnopencv.com/wp-content/uploads/2017/09/dogs-golden-retriever-top-250-proposals.jpg"/> <img src = "https://www.learnopencv.com/wp-content/uploads/2017/09/breakfast-top-200-proposals-300x200.jpg"/>
 
 # 1. Object detection using Hog features
 
