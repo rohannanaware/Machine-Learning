@@ -124,7 +124,7 @@
   * *Q. How is object orientation change different than geometric transformations*
   * *Q. What is the difference between the HOG approach from HAAR cascades?*
 * Next steps:
-  * Read theory from other links
+  * [Read theory from other links](https://www.learnopencv.com/histogram-of-oriented-gradients/)
   * Read up more on the implementation part
  
 # 2. Region-based Convolutional Neural Networks(R-CNN)
