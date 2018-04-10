@@ -56,12 +56,27 @@
 # Object detection techniques
 
 * **Object detection is modelled as a classification problem where we take windows of fixed sizes from input image at all possible locations and feed these patches into an image classifier**
+* The location of the objects is given by the location of the image patches where the class probability returned by the object recognition algorithm is high
 * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/Sliding-window.gif"/>
 * How to determine the size of window - 
   * Idea is that we resize the image at multiple scales and we count on the fact that our chosen window size will completely contain the object in one of these resized images
   * Image pyramid is created by scaling the image:
   * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/pyramid-269x300.png"/>
 * How do we deal with aspect ratio - person sitting vs. standing?
+* **[Region Proposal Algorithms](https://www.learnopencv.com/selective-search-for-object-detection-cpp-python/)**
+  * Takes an image as the input and output bounding boxes corresponding to all patches in an image that are most likely to be objects
+  * <img src = "https://www.learnopencv.com/wp-content/uploads/2017/10/object-recognition-false-positives-true-positives.jpg"/>
+  * These region proposals can be noisy, overlapping and may not contain the object perfectly but amongst these region proposals, there will be a proposal which will be very close to the actual object in the image
+  * The region proposals are furhter classified using any classification model and the one with highest probability score is used to identify the location of the object
+  * Unlike the sliding window approach where we are looking for the object at all pixel locations and at all scales, region proposal algorithm work by grouping pixels into a smaller number of segments. This reduces the number of image patches we have to classify
+  * In segmentation, we group adjacent regions which are similar to each other based on some criteria such as color, texture etc
+  * The idea is to have a high recall at the cost of false positives as they can be eliminated using filtering based on probability score in the object classification stage. Approaches used - 
+    1. [Objectness](http://groups.inf.ed.ac.uk/calvin/objectness/)
+    2. [Constrained Parametric Min-Cuts for Automatic Object Segmentation](http://www.maths.lth.se/matematiklth/personal/sminchis/code/cpmc/index.html)
+    3. [Category Independent Object Proposals](http://vision.cs.uiuc.edu/proposals/)
+    4. [Randomized Prim](http://www.vision.ee.ethz.ch/~smanenfr/rp/index.html)
+    5. [Selective Search](http://koen.me/research/selectivesearch/)
+  * **Selective Search for Object Recognition**
 
 # 1. Object detection using Hog features
 
