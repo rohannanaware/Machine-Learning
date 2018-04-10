@@ -111,6 +111,9 @@
   * [Link - filtering and Enhancing Images](https://courses.cs.washington.edu/courses/cse576/book/ch5.pdf)
   * [Link - learnopencv](https://www.learnopencv.com/histogram-of-oriented-gradients/)
 * <img src = "http://cdn-ak.f.st-hatena.com/images/fotolife/c/cool_on/20160122/20160122182347.png"/>v <img src = "http://cdn-ak.f.st-hatena.com/images/fotolife/c/cool_on/20160122/20160122182350.png"/>
+* **Feature descriptor** : A feature descriptor is a representation of an image or an image patch that simplifies the image by extracting useful information and throwing away extraneous information
+* Typically, a feature descriptor converts an image of size width x height x 3 (channels ) to a feature vector / array of length n. In the case of the HOG feature descriptor, the input image is of size 64 x 128 x 3 and the output feature vector is of length 3780
+* The feature vector produced by these algorithms when fed into an image classification algorithms like Support Vector Machine (SVM) produce good results
 * On each window obtained from running the sliding window on the pyramid, we calculate Hog Features which are fed to an SVM(Support vector machine) to create classifiers
 * The technique counts occurrences of gradient orientation in localized portions of an image
 * The essential thought behind the histogram of oriented gradients descriptor is that local **object appearance and shape within an image** can be described by the distribution of **intensity gradients or edge directions**
