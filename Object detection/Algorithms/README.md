@@ -1,25 +1,3 @@
-# HAAR Cascades
-
-* [Summary](https://pdfs.semanticscholar.org/0f1e/866c3acb8a10f96b432e86f8a61be5eb6799.pdf)
-* [Haar-like feature](https://en.wikipedia.org/wiki/Haar-like_feature)
-* [Face Detection using Haar Cascades ](https://docs.opencv.org/3.4.1/d7/d8b/tutorial_py_face_detection.html)
-* [Cascade Classifier Training ](https://docs.opencv.org/3.4.1/dc/d88/tutorial_traincascade.html)
-
-
-# RetinaNet
-
-* Reference links
-  * [RetinaNet github page](https://github.com/fizyr/keras-retinanet)
-  * [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
-
-* The highest accuracy object detectors to date are based on a **two-stage approach popularized by R-CNN**, where a classifier is applied to a sparse set of candidate object locations
-* In contrast, one-stage detectors that are applied over a regular, dense sampling of possible object locations have the potential to be faster and simpler, but have trailed the accuracy of two-stage detectors thus far
-* In this paper(2nd link), we investigate why this is the case - 
-  * We discover that the **extreme foreground-background class imbalance** encountered during training of dense detectors is the central cause
-* We propose to address this class imbalance by reshaping the **standard cross entropy loss** such that it down-weights the loss assigned to well-classified examples
-* Our novel Focal Loss focuses training on a **sparse set of hard examples** and prevents the vast number of easy negatives from **overwhelming the detector** during training
-* To evaluate the effectiveness of our loss, we design and train a simple dense detector we call **RetinaNet**
-* **Our results show that when trained with the focal loss, RetinaNet is able to match the speed of previous one-stage detectors while surpassing the accuracy of all existing state-of-the-art two-stage detector**
 
 # Using CNN for object detection
 
@@ -192,4 +170,21 @@
 * SSD runs a convolutional network on input image only once and calculates a feature map
 
 # 8. RetinaNet
-* Reference links - 
+* Reference links
+  * [RetinaNet github page](https://github.com/fizyr/keras-retinanet)
+  * [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
+* The highest accuracy object detectors to date are based on a **two-stage approach popularized by R-CNN**, where a classifier is applied to a sparse set of candidate object locations
+* In contrast, one-stage detectors that are applied over a regular, dense sampling of possible object locations have the potential to be faster and simpler, but have trailed the accuracy of two-stage detectors thus far
+* In this paper(2nd link), we investigate why this is the case - 
+  * We discover that the **extreme foreground-background class imbalance** encountered during training of dense detectors is the central cause
+* We propose to address this class imbalance by reshaping the **standard cross entropy loss** such that it down-weights the loss assigned to well-classified examples
+* Our novel Focal Loss focuses training on a **sparse set of hard examples** and prevents the vast number of easy negatives from **overwhelming the detector** during training
+* To evaluate the effectiveness of our loss, we design and train a simple dense detector we call **RetinaNet**
+* **Our results show that when trained with the focal loss, RetinaNet is able to match the speed of previous one-stage detectors while surpassing the accuracy of all existing state-of-the-art two-stage detector**
+
+# 9. HAAR Cascades
+
+* [Summary](https://pdfs.semanticscholar.org/0f1e/866c3acb8a10f96b432e86f8a61be5eb6799.pdf)
+* [Haar-like feature](https://en.wikipedia.org/wiki/Haar-like_feature)
+* [Face Detection using Haar Cascades ](https://docs.opencv.org/3.4.1/d7/d8b/tutorial_py_face_detection.html)
+* [Cascade Classifier Training ](https://docs.opencv.org/3.4.1/dc/d88/tutorial_traincascade.html)
