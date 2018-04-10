@@ -107,8 +107,9 @@
 # 1. Object detection using Hog features
 
 * Reference links:
-  * [Wiki](https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients)
-  * [Filtering and Enhancing Images](https://courses.cs.washington.edu/courses/cse576/book/ch5.pdf)
+  * [Link - wiki](https://en.wikipedia.org/wiki/Histogram_of_oriented_gradients)
+  * [Link - filtering and Enhancing Images](https://courses.cs.washington.edu/courses/cse576/book/ch5.pdf)
+  * [Link - learnopencv](https://www.learnopencv.com/histogram-of-oriented-gradients/)
 * <img src = "http://cdn-ak.f.st-hatena.com/images/fotolife/c/cool_on/20160122/20160122182347.png"/>v <img src = "http://cdn-ak.f.st-hatena.com/images/fotolife/c/cool_on/20160122/20160122182350.png"/>
 * On each window obtained from running the sliding window on the pyramid, we calculate Hog Features which are fed to an SVM(Support vector machine) to create classifiers
 * The technique counts occurrences of gradient orientation in localized portions of an image
