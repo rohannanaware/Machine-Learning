@@ -78,7 +78,8 @@
     5. [Selective Search](http://koen.me/research/selectivesearch/)
   * **Selective Search for Object Recognition**
     * Reference links - 
-      * [Link - Stanford *good visuals*](http://vision.stanford.edu/teaching/cs231b_spring1415/slides/ssearch_schuyler.pdf)
+      * [Link - Stanford](http://vision.stanford.edu/teaching/cs231b_spring1415/slides/ssearch_schuyler.pdf)
+      * [Link - research paper](https://koen.me/research/pub/uijlings-ijcv2013-draft.pdf)
     * Selective Search is a region proposal algorithm that computes hierarchical grouping of similar regions based on color, texture, size and shape compatibility
     * Selective Search starts by **over-segmenting the image based on intensity of the pixels using a graph-based [segmentation method](http://cs.brown.edu/~pff/segment/) by Felzenszwalb and Huttenlocher**. The image on the right contains segmented regions represented using solid colors:
     * <img src = "https://www.learnopencv.com/wp-content/uploads/2017/09/breakfast-300x200.jpg"/> <img src = "https://www.learnopencv.com/wp-content/uploads/2017/09/breakfast_fnh-300x200.jpg"/>
