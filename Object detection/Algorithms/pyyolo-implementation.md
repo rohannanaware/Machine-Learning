@@ -1,4 +1,4 @@
-# Setting up pyyolo to train and test on customer data
+# Setting up pyyolo to train and test on custom data
 
 # Steps involved and clarification required
 * Understand the pyyolo module and what arguments are taken by it
