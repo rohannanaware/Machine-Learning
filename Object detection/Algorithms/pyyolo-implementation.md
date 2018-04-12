@@ -15,4 +15,4 @@
 * [Training YOLO to detect custom objects](https://timebutt.github.io/static/how-to-train-yolov2-to-detect-custom-objects/)
 * [Yolo-v3 and Yolo-v2 for Windows and Linux](https://github.com/AlexeyAB/darknet#you-only-look-once-unified-real-time-object-detection-version-2)
 * [Location of python modules](https://stackoverflow.com/questions/269795/how-do-i-find-the-location-of-python-module-sources)
- * For a pure python module you can find the source by looking at `themodule.__file__`
+  * For a pure python module you can find the source by looking at `themodule.__file__`
