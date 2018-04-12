@@ -1,4 +1,4 @@
-### Procedure for setting up environmet to run retinanet
+### # Setting up retinanet to train and test on custom data
 
 #### Clone the retinanet repository-
  - `git clone --recursive https://github.com/fizyr/keras-retinanet.git`
