@@ -163,6 +163,7 @@ the detectors
 
 * Reference links:
   * [Link - arxiv](https://arxiv.org/abs/1504.08083)
+  * [Link - github](https://github.com/rbgirshick/fast-rcnn)
 * 
 
 # 5. Faster R-CNN
