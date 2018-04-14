@@ -154,13 +154,24 @@
 * Using SPP-net, we compute the feature maps from the entire
 image only once, and then pool features in arbitrary regions (sub-images) to generate fixed-length representations for training
 the detectors
-* 
+* *Needs more research*
+  * *On what basis are the pixels in the original image mappped with Pixels in the final convoluted image?*
+  * *How is a portion of the Pixels selected and converted to a fixed size to be sent into the classification layers?*
+  * *Why is back-propogation difficult?*
 
 # 4. Fast R-CNN
+
+* Reference links:
+  * [Link - arxiv](https://arxiv.org/abs/1504.08083)
+* 
 
 # 5. Faster R-CNN
 
 - 2 stage RCNN meaning
+
+# 6. Mask R-CNN
+* Reference links:
+  * [Link - arxiv](https://arxiv.org/abs/1703.06870)
 
 # Regression-based object detectors
 * Classification based object detectors first generate object proposals which are later sent into classification or regression heads
