@@ -159,6 +159,7 @@
   * In each spatial bin, we pool the responses  of  each filter
   * The  outputs  of  the  spatial  pyramid  pooling  are kM-dimensional vectors with the number of bins denoted as M(k is the number of  filters  in  the  last  convolutional layer). The fixed-dimensional vectors are the input to the fully-connected layer
 * <img src = "http://cv-tricks.com/wp-content/uploads/2016/12/CNN.png"/>
+
   * A network structure with a spatial pyramid pooling  layer. Here  256  is  the  filter  number  of  the conv5 layer, and conv5 is the last convolutional layer
 * Major drawback is that it's difficult to perform back propogation through the spatial pooling layer
 * Using SPP-net, we compute the feature maps from the entire
