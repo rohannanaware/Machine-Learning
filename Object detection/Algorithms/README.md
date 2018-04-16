@@ -1,3 +1,8 @@
+# Object detection and tracking algorithms
+
+* [Using CNN for object detection](#using-cnn-for-object-detection)
+* [Multi - class vs. multi - label classification](#multi-class-vs-multi-label-classification)
+* [Object detection techniques](#object-detection-techniques)
 
 # Using CNN for object detection
 
@@ -16,7 +21,7 @@
 * Just like multi-label image classification problems, we can have multi-class object detection problem where we detect multiple kinds of objects in a single image: 
   * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/Multi-class-object-detection.png"/>
   
-# Multi - class vs. multi - label classification
+# Multi class vs multi label classification
 
 * Reference links
   - [Stackexchange](https://stats.stackexchange.com/questions/11859/what-is-the-difference-between-multiclass-and-multilabel-problem)
@@ -175,11 +180,14 @@ the detectors
 * Reference links:
   * [Link - arxiv](https://arxiv.org/abs/1504.08083)
   * [Link - github](https://github.com/rbgirshick/fast-rcnn)
-* 
+* Need more research on how this is different than SPP-net
 
 # 5. Faster R-CNN
 
-- 2 stage RCNN meaning
+* Slowest part in Fast RCNN was **Selective Search or Edge boxes**. Faster RCNN replaces selective search with a very small convolutional network called **Region Proposal Network** to generate regions of Interests
+* <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/Faster-RCNN-CV-Tricks-1.jpg"/>
+* At each location, the original paper uses 3 kinds of **anchor boxes** for scale 128x 128, 256×256 and 512×512. Similarly, for aspect ratio, it uses three aspect ratios 1:1, 2:1 and 1:2. So, In total at each location, we have 9 boxes on which RPN predicts the probability of it being background or foreground
+* RPN gives out bounding boxes of various sizes with the corresponding probabilities of each class
 
 # 6. Mask R-CNN
 * Reference links:
@@ -189,7 +197,7 @@ the detectors
 * Classification based object detectors first generate object proposals which are later sent into classification or regression heads
 * Few methods pose detection as a regression problem. Two of the most popular ones are YOLO and SSD
 
-# 6. YOLO(You only Look Once)
+# 7. YOLO(You only Look Once)
 * Reference links - 
   * [How to train yolov2-to detect custom objects?](https://timebutt.github.io/static/how-to-train-yolov2-to-detect-custom-objects/)
 * YOLO divides each image into a grid of S x S and each grid predicts N bounding boxes and confidence
@@ -197,11 +205,11 @@ the detectors
 * YOLO also predicts the classification score for each box for every class in training. You can combine both the classes to calculate the probability of each class being present in a predicted box
 * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/model2-1024x280.jpg"/>
 
-# 7. Single Shot Detector(SSD)
+# 8. Single Shot Detector(SSD)
 
 * SSD runs a convolutional network on input image only once and calculates a feature map
 
-# 8. RetinaNet
+# 9. RetinaNet
 * Reference links
   * [RetinaNet github page](https://github.com/fizyr/keras-retinanet)
   * [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
@@ -214,7 +222,7 @@ the detectors
 * To evaluate the effectiveness of our loss, we design and train a simple dense detector we call **RetinaNet**
 * **Our results show that when trained with the focal loss, RetinaNet is able to match the speed of previous one-stage detectors while surpassing the accuracy of all existing state-of-the-art two-stage detector**
 
-# 9. HAAR Cascades
+# 10. HAAR Cascades
 
 * [Summary](https://pdfs.semanticscholar.org/0f1e/866c3acb8a10f96b432e86f8a61be5eb6799.pdf)
 * [Haar-like feature](https://en.wikipedia.org/wiki/Haar-like_feature)
