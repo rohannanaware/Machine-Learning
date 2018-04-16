@@ -200,6 +200,7 @@ the detectors
 # 7. YOLO(You only Look Once)
 * Reference links - 
   * [How to train yolov2-to detect custom objects?](https://timebutt.github.io/static/how-to-train-yolov2-to-detect-custom-objects/)
+  * [Link - arxiv](https://arxiv.org/pdf/1506.02640.pdf)
 * YOLO divides each image into a grid of S x S and each grid predicts N bounding boxes and confidence
 * The confidence reflects the accuracy of the bounding box and whether the bounding box actually contains an object(regardless of class)
 * YOLO also predicts the classification score for each box for every class in training. You can combine both the classes to calculate the probability of each class being present in a predicted box
