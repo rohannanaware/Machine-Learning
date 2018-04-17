@@ -201,10 +201,33 @@ the detectors
 * Reference links - 
   * [How to train yolov2-to detect custom objects?](https://timebutt.github.io/static/how-to-train-yolov2-to-detect-custom-objects/)
   * [Link - arxiv](https://arxiv.org/pdf/1506.02640.pdf)
+  * [Link - Standford](http://cs229.stanford.edu/proj2016/report/BuhlerLambertVilim-CS229FinalProjectReport.pdf)
 * YOLO divides each image into a grid of S x S and each grid predicts N bounding boxes and confidence
 * The confidence reflects the accuracy of the bounding box and whether the bounding box actually contains an object(regardless of class)
 * YOLO also predicts the classification score for each box for every class in training. You can combine both the classes to calculate the probability of each class being present in a predicted box
 * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/model2-1024x280.jpg"/>
+
+* **1. Introduction**
+  * <img src = "https://lh5.googleusercontent.com/wruU7oqG8qUityMNHvl6gyADe3V-_s5mws9jkCSVjE2WANKK3SPfelHQDgDHqh76VqyYm5Bxc5p74yiXGppG7nmTjY2_gebDsI_9vXqEr-GcSTq-_m1xlwE2pTdo4Mp2Vo3FYnpr"/>
+  * **Figure 1**:The YOLO Detection System. Processing images with YOLO is simple and straightforward. Our system (1) resizes the input image to 448×448, (2) runs a single convolutional net-work on the image, and (3) thresholds the resulting detections by
+the model’s confidence
+  * Object detection is reframed as a single regression problem,  straight  from  image  pixels  to  bounding  box  coordinates and class probabilities
+  * A  single  convolutional  network  simultaneously  predicts  multiple bounding boxes and class probabilities for those boxes
+  * **Since we frame detection as a regression problem we don’t need a complex pipeline***Why?*
+* **2. Unified Detection**
+  * Our  network  uses  features from the entire image to predict each bounding box. It also predicts  all  bounding  boxes  across  all  classes  for  an  image simultaneously
+  * Our system divides the input image into an S×S grid. If the center of an object falls into a grid cell, that grid cell is responsible for detecting that object
+  * Each grid cell predicts B bounding boxes and confidence scores for those boxes. These confidence scores reflect how confident the model is that the box contains an object and also how accurate it thinks the box is that it predicts
+  * Formally we define confidence as Pr(Object)∗IOU_truth_pred. If no object exists in that cell,  the confidence scores should be zero.  Otherwise we want the confidence score to equal the intersection  over  union  (IOU)  between  the  predicted  box
+and the ground truth
+  * Each bounding box consists of 5 predictions:x,y,w,h,and confidence. The (x,y) coordinates represent the center of the box relative to the bounds of the grid cell. The width and height are predicted relative to the whole image. Finally the confidence prediction represents the IOU between the predicted box and any ground truth box
+  * Each grid cell also predicts C conditional class probabilities, Pr(Class(i) | Object). These probabilities are conditioned on the grid cell containing an object. We only predict one set of class probabilities per grid cell, regardless of the number of boxes B
+  * At test time we multiply the conditional class probabilities and the individual box confidence predictions,
+    * ` Pr(Class(i)|Object)∗Pr(Object)∗IOU_truth_pred = Pr(Class(i))∗IOU_truth_pred`
+  * which  gives  us  class-specific  confidence  scores  for  each box.  These scores encode both the probability of that class appearing in the box and how well the predicted box fits the object
+  * <img src = "http://cfile3.uf.tistory.com/image/2327094158E5EDD5118443"/>
+    * Figure 2: The Model. Our system models detection as a regression problem. It divides the image into an S × S grid and for each grid cell predicts B bounding boxes, confidence for those boxes, and C class  probabilities.   These  predictions  are  encoded  as  an S × S × (B ∗ 5 + C) tensor
+
 
 # 8. Single Shot Detector(SSD)
 
