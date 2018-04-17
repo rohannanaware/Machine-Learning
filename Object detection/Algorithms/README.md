@@ -20,7 +20,11 @@
   * bounding_box_height
 * Just like multi-label image classification problems, we can have multi-class object detection problem where we detect multiple kinds of objects in a single image: 
   * <img src = "http://cv-tricks.com/wp-content/uploads/2017/12/Multi-class-object-detection.png"/>
-  
+
+# CNN architecture
+
+* LeNet, AlexNet, GoogleNet, etc.
+
 # Multi class vs multi label classification
 
 * Reference links
@@ -227,6 +231,7 @@ and the ground truth
   * which  gives  us  class-specific  confidence  scores  for  each box.  These scores encode both the probability of that class appearing in the box and how well the predicted box fits the object
   * <img src = "http://cfile3.uf.tistory.com/image/2327094158E5EDD5118443"/>
     * Figure 2: The Model. Our system models detection as a regression problem. It divides the image into an S × S grid and for each grid cell predicts B bounding boxes, confidence for those boxes, and C class  probabilities.   These  predictions  are  encoded  as  an S × S × (B ∗ 5 + C) tensor
+    
 
 
 # 8. Single Shot Detector(SSD)
