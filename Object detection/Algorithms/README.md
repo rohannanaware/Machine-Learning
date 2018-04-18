@@ -232,10 +232,8 @@ and the ground truth
   * which  gives  us  class-specific  confidence  scores  for  each box.  These scores encode both the probability of that class appearing in the box and how well the predicted box fits the object
   * <img src = "http://cfile3.uf.tistory.com/image/2327094158E5EDD5118443"/>
     * Figure 2: The Model. Our system models detection as a regression problem. It divides the image into an S × S grid and for each grid cell predicts B bounding boxes, confidence for those boxes, and C class  probabilities.   These  predictions  are  encoded  as  an S × S × (B ∗ 5 + C) tensor
-    
 
-
-# 8. Single Shot Detector(SSD)
+# 8. Single Shot Multi Box Detector(SSD)
 
 * SSD runs a convolutional network on input image only once and calculates a feature map
 
