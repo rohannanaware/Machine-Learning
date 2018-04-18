@@ -3,6 +3,7 @@
 * [Using CNN for object detection](#using-cnn-for-object-detection)
 * [Multi - class vs. multi - label classification](#multi-class-vs-multi-label-classification)
 * [Object detection techniques](#object-detection-techniques)
+* [Questions/ further exploration](#questions)
 
 # Using CNN for object detection
 
@@ -257,3 +258,10 @@ and the ground truth
 * [Haar-like feature](https://en.wikipedia.org/wiki/Haar-like_feature)
 * [Face Detection using Haar Cascades ](https://docs.opencv.org/3.4.1/d7/d8b/tutorial_py_face_detection.html)
 * [Cascade Classifier Training ](https://docs.opencv.org/3.4.1/dc/d88/tutorial_traincascade.html)
+
+
+# Questions
+
+- Mean average predcision calculation
+
+
