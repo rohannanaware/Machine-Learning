@@ -50,9 +50,3 @@ for file in os.listdir(test_dir):
 
 test_df = pd.DataFrame(test, columns = ['filepath', 'file'])
 print('Size of test data : ', test_df.shape)
-
-
-
-
-
-
