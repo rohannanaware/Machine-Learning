@@ -10,7 +10,7 @@
 - How to come up with structure of a neural network for our specific problem
 - Dropout
 - Categorical crossentropy : Used to measure loss/ error in observed and predicted for multi - class
-
+- 
 # Reference
 
 - [Tutorial: Optimizing Neural Networks using Keras (with Image recognition case study)](https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study/) 
@@ -41,7 +41,9 @@ The key features of Keras are:
 - Train and monitor changes in training and validation data sets
 - Test your model, and save it for future use
 
-#### Cross-entropy
+# Cross-entropy
+
+## [Machine Learning: Should I use a categorical cross entropy or binary cross entropy loss for binary predictions?](https://stats.stackexchange.com/questions/260505/machine-learning-should-i-use-a-categorical-cross-entropy-or-binary-cross-entro)
 
 Binomial cross-entropy loss is a special case of multinomial cross-entropy loss for m=2.
 
@@ -183,3 +185,7 @@ Where <math xmlns="http://www.w3.org/1998/Math/MathML">
   <mo>,</mo>
   <mi>j</mi>
 </math> is the prediction for a sample
+
+## [A Friendly Introduction to Cross-Entropy Loss](http://rdipietro.github.io/friendly-intro-to-cross-entropy-loss/)
+
+#### [Difference between probabilty and likelihood](https://stats.stackexchange.com/questions/2641/what-is-the-difference-between-likelihood-and-probability)
