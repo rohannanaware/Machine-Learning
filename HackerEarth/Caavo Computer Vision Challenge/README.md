@@ -24,7 +24,7 @@
 5. Kaggle kernels
     - [Kaggle - Plant Seedlings Classification](https://www.kaggle.com/raoulma/plants-xception-90-06-test-accuracy)
     - [Kaggle - Digit recognizer](https://www.kaggle.com/yassineghouzam/introduction-to-cnn-keras-0-997-top-6)
-6. [An overview opf gradient descent optimization algorithms](http://ruder.io/optimizing-gradient-descent/)
+6. [An overview of gradient descent optimization algorithms](http://ruder.io/optimizing-gradient-descent/)
 7. Categorical crossentropy
     - [Stackexchange](https://stats.stackexchange.com/questions/260505/machine-learning-should-i-use-a-categorical-cross-entropy-or-binary-cross-entro)
 
@@ -200,7 +200,7 @@ Where <math xmlns="http://www.w3.org/1998/Math/MathML">
 - #### [StatQuest: Probability vs Likelihood](https://www.youtube.com/watch?v=pYxNSUDSFH4)
 
 
-# 6. [An overview opf gradient descent optimization algorithms](http://ruder.io/optimizing-gradient-descent/)
+# 6. [An overview of gradient descent optimization algorithms](http://ruder.io/optimizing-gradient-descent/)
 
 Gradient descent is a way to minimize an objective function J(θ) parameterized by a model's parameters θ∈Rd by updating the parameters in the opposite direction of the gradient of the objective function ∇θJ(θ) w.r.t. to the parameters. The learning rate η determines the size of the steps we take to reach a (local) minimum. In other words, we follow the direction of the slope of the surface created by the objective function downhill until we reach a valley
 
