@@ -319,15 +319,3 @@ Vanilla mini - batch gradient descent challenges -
 - Adagrad's main weakness is its accumulation of the squared gradients in the denominator: Since every added term is positive, the accumulated sum keeps growing during training. This in turn causes the learning rate to shrink and eventually become infinitesimally small, at which point the algorithm is no longer able to acquire additional knowledge
 
 #### Adadelta
-
-
-
-
-
-
-
-
-
-
-
-Adam
