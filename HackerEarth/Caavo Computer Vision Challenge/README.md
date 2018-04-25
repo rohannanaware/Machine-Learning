@@ -209,7 +209,7 @@ Gradient descent is a way to minimize an objective function J(θ) parameterized 
 There are three variants of gradient descent, which differ in how much data we use to compute the gradient of the objective function :
 - Batch
 - Stochaistic
-- 
+- Mini-batch
 
 #### Batch gradient descent :
 
@@ -317,6 +317,8 @@ Vanilla mini - batch gradient descent challenges -
 - Gt∈Rd×d here is a diagonal matrix where each diagonal element i,i is the sum of the squares of the gradients w.r.t. θi up to time step t, while ϵ is a smoothing term that avoids division by zero (usually on the order of 1e−8). Interestingly, without the square root operation, the algorithm performs much worse
 - Adagrad eliminates the need to manually tune the learning rate
 - Adagrad's main weakness is its accumulation of the squared gradients in the denominator: Since every added term is positive, the accumulated sum keeps growing during training. This in turn causes the learning rate to shrink and eventually become infinitesimally small, at which point the algorithm is no longer able to acquire additional knowledge
+
+#### Adadelta
 
 
 
