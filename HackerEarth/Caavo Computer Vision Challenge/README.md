@@ -7,8 +7,10 @@
 
 # Read up
 - Optimization and annealing in neural networks
+  - Optimization using RMSprop
 - How to come up with structure of a neural network for our specific problem
 - Dropout
+- Keras - official documentation
 - Categorical crossentropy : Used to measure loss/ error in observed and predicted for multi - class
 
 # Reference
@@ -19,6 +21,9 @@
 - Categorical cross entropy - 
   - [Machine Learning: Should I use a categorical cross entropy or binary cross entropy loss for binary predictions?](https://stats.stackexchange.com/questions/260505/machine-learning-should-i-use-a-categorical-cross-entropy-or-binary-cross-entro)
   - [A Friendly Introduction to Cross-Entropy Loss](http://rdipietro.github.io/friendly-intro-to-cross-entropy-loss/)
+- [Kaggle - Plant Seedlings Classification](https://www.kaggle.com/raoulma/plants-xception-90-06-test-accuracy)
+- [Kaggle - Digit recognizer](https://www.kaggle.com/yassineghouzam/introduction-to-cnn-keras-0-997-top-6)
+- [An overview opf gradient descent optimization algorithms](http://ruder.io/optimizing-gradient-descent/)
 
 ## [Tutorial: Optimizing Neural Networks using Keras (with Image recognition case study)](https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study/) 
 
