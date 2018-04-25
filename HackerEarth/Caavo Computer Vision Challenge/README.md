@@ -265,7 +265,16 @@ Vanilla mini - batch gradient descent challenges -
 ### Gradient descent optimization algorithms
 
 - Momentum
-- 
+- Nesterov accelerated gradient
+- Adagrad
+- Adadelta
+- RMSprop
+- Adam
+- AdaMax
+- Nadam
+- AMSGrad
+- Visualization of algorithms
+- Which optimizer to choose?
 
 #### Momentum
 - SGD has trouble navigating ravines, i.e. areas where the surface curves much more steeply in one dimension than in another [1], which are common around local optima. In these scenarios, SGD oscillates across the slopes of the ravine while only making hesitant progress along the bottom towards the local optimum
@@ -295,6 +304,19 @@ Vanilla mini - batch gradient descent challenges -
 - *did not understand the last part explaining below image*
 - <img src = "http://ruder.io/content/images/2016/09/nesterov_update_vector.png"/>
 
+#### Adagrad
+
+- Adagrad adapts the learning rate to the parameters, performing larger updates for infrequent and smaller updates for frequent parameters
+  - For this reason, it is well-suited for dealing with sparse data
+- Previously, we performed an update for all parameters θ at once as every parameter θi used the same learning rate η. As Adagrad uses a different learning rate for every parameter θi at every time step t
+- For brevity, we set g(t,i) to be the gradient of the objective function w.r.t. to the parameter θi at time step  t
+- The SGD update for every parameter θi at each time step t then becomes:
+- θ(t+1,i) = θ(t,i) − η ⋅ g(t,i)
+- In its update rule, Adagrad modifies the general learning rate η at each time step t for every parameter θi based on the past gradients that have been computed for θi:
+- θ(t+1,i) = θ(t,i) − [η . √(G(t) + ϵ)] . g(t,i)
+- Gt∈Rd×d here is a diagonal matrix where each diagonal element i,i is the sum of the squares of the gradients w.r.t. θi up to time step t, while ϵ is a smoothing term that avoids division by zero (usually on the order of 1e−8). Interestingly, without the square root operation, the algorithm performs much worse
+- Adagrad eliminates the need to manually tune the learning rate
+- Adagrad's main weakness is its accumulation of the squared gradients in the denominator: Since every added term is positive, the accumulated sum keeps growing during training. This in turn causes the learning rate to shrink and eventually become infinitesimally small, at which point the algorithm is no longer able to acquire additional knowledge
 
 
 
@@ -306,4 +328,4 @@ Vanilla mini - batch gradient descent challenges -
 
 
 
-
+Adam
