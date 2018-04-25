@@ -286,11 +286,14 @@ Vanilla mini - batch gradient descent challenges -
     - if the previous change in loss(β.z(k)) and current change(∇f(w(k))) is in the same direction then the momentum increases
   - *need to read up more on the derivation part*
   
+#### Nesterov accelerated gradient
 
-
-
-
-
+- Nesterov accelerated gradient is a way to give our momentum prescience(update the weights on the basis on future value of loss than the current)
+- We know that we will use our momentum term γ.vt−1 to move the parameters θ. Computing θ−γ.vt−1 thus gives us an approximation of the next position of the parameters (the gradient is missing for the full update), a rough idea where our parameters are going to be. We can now effectively look ahead by **calculating the gradient not w.r.t. to our current parameters θθ but w.r.t. the approximate future position of our parameters**
+- `vtθ = γ.v(t−1) + η.∇θJ(θ−γ.v(t−1))`
+- `θ = θ − vt`
+- *did not understand the last part explaining below image*
+- <img src = "http://ruder.io/content/images/2016/09/nesterov_update_vector.png"/>
 
 
 
