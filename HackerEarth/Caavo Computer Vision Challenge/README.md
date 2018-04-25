@@ -26,7 +26,7 @@
     - [Kaggle - Digit recognizer](https://www.kaggle.com/yassineghouzam/introduction-to-cnn-keras-0-997-top-6)
 6. [An overview opf gradient descent optimization algorithms](http://ruder.io/optimizing-gradient-descent/)
 7. Categorical crossentropy
-    - [Stackexchange]((https://stats.stackexchange.com/questions/260505/machine-learning-should-i-use-a-categorical-cross-entropy-or-binary-cross-entro))
+    - [Stackexchange](https://stats.stackexchange.com/questions/260505/machine-learning-should-i-use-a-categorical-cross-entropy-or-binary-cross-entro)
 
 ## 1. [Tutorial: Optimizing Neural Networks using Keras (with Image recognition case study)](https://www.analyticsvidhya.com/blog/2016/10/tutorial-optimizing-neural-networks-using-keras-with-image-recognition-case-study/) 
 
@@ -265,13 +265,27 @@ Vanilla mini - batch gradient descent challenges -
 ### Gradient descent optimization algorithms
 
 - Momentum
+- 
 
+#### Momentum
+- SGD has trouble navigating ravines, i.e. areas where the surface curves much more steeply in one dimension than in another [1], which are common around local optima. In these scenarios, SGD oscillates across the slopes of the ravine while only making hesitant progress along the bottom towards the local optimum
+- <img src = "http://ruder.io/content/images/2015/12/without_momentum.gif"/> <img src = "http://ruder.io/content/images/2015/12/with_momentum.gif"/>
 
+- `vtθ = γ . vt − 1 + η . ∇θJ(θ)`
+- `θ = θ − vt`
+- Essentially, when using momentum, we push a ball down a hill. The ball accumulates momentum as it rolls downhill, becoming faster and faster on the way (until it reaches its terminal velocity if there is air resistance, i.e. γ<1γ<1). The same thing happens to our parameter updates: The momentum term increases for dimensions whose gradients point in the same directions and reduces updates for dimensions whose gradients change directions. As a result, we gain faster convergence and reduced oscillation
 
-
-
-
-
+- [Why Momentum Really Works](https://distill.pub/2017/momentum/)
+  -  Pathological curvature is, simply put, regions of ff which aren’t scaled properly. The landscapes are often described as valleys, trenches, canals and ravines. The iterates either jump between valleys, or approach the optimum in small, timid steps. Progress along certain directions grind to a halt. In these unfortunate regions, gradient descent fumbles
+  - Original gradient descent equation
+    - `z(k+1) = ∇f(w(k))`
+    - `w(k+1) = w(k) - α.z(k+1)`
+  - Update proposed in Momentum approach
+    - `z(k+1) = β.z(k) + ∇f(w(k))`
+    - `w(k+1) = w(k) - α.z(k+1)`
+    - if the previous change in loss(β.z(k)) and current change(∇f(w(k))) is in the same direction then the momentum increases
+  - *need to read up more on the derivation part*
+  
 
 
 
