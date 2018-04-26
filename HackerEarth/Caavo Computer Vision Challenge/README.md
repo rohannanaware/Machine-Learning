@@ -319,3 +319,19 @@ Vanilla mini - batch gradient descent challenges -
 - Adagrad's main weakness is its accumulation of the squared gradients in the denominator: Since every added term is positive, the accumulated sum keeps growing during training. This in turn causes the learning rate to shrink and eventually become infinitesimally small, at which point the algorithm is no longer able to acquire additional knowledge
 
 #### Adadelta
+
+- Adadelta is an extension of Adagrad that seeks to reduce its aggressive, monotonically decreasing learning rate. Instead of accumulating all past squared gradients, Adadelta restricts the window of accumulated past gradients to some fixed size w
+- Instead of inefficiently storing ww previous squared gradients, the sum of gradients is recursively defined as a decaying average of all past squared gradients. The running average E[g2]t at time step t then depends (as a fraction γ similarly to the Momentum term) only on the previous average and the current gradient
+- `E[g2]t = γ . E[g2]t−1 + (1−γ) . g2t`
+- `Δθt  = − (RMS[Δθ]t−1) / (RMS[g]t) . gt`
+- `θt+1 = θt+Δθt`
+
+#### RMSprop
+
+- RMSprop and Adadelta have both been developed independently around the same time stemming from the need to resolve Adagrad's radically diminishing learning rates. RMSprop in fact is identical to the first update vector of Adadelta that we derived above:
+- E[g2]t = 0.9 . E[g2]t−1 + 0.1 . g2t
+- θt+1 = θt − η . sqrt(E[g2]t+ϵ) . gt
+
+#### Adam
+
+
