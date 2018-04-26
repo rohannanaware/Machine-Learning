@@ -264,16 +264,16 @@ Vanilla mini - batch gradient descent challenges -
 
 ### Gradient descent optimization algorithms
 
-- Momentum
-- Nesterov accelerated gradient
-- Adagrad
-- Adadelta
-- RMSprop
-- Adam
+- Momentum[#momentum]
+- Nesterov accelerated gradient[#nesterov-accelerated-gradient]
+- Adagrad[#adagrad]
+- Adadelta[#adadelta]
+- RMSprop[#rmsprop]
+- Adam[#adam]
 - AdaMax
 - Nadam
 - AMSGrad
-- Visualization of algorithms
+- Visualization of algorithms[#visualization-of-algorithms]
 - Which optimizer to choose?
 
 #### Momentum
@@ -334,4 +334,25 @@ Vanilla mini - batch gradient descent challenges -
 
 #### Adam
 
+- Adaptive Moment Estimation (Adam) is another method that computes adaptive learning rates for each parameter
+- In addition to storing an exponentially decaying average of past squared gradients `vt` like Adadelta and RMSprop, Adam also keeps an exponentially decaying average of past gradients `mt`, similar to momentum
+- `mt = β1 . mt−1 + (1−β1) . gt`
+- `vt = β2 . vt−1 + (1−β2) . g2t`
+- mt  and vt are estimates of the first moment (the mean) and the second moment (the uncentered variance) of the gradients respectively, hence the name of the method
+- As mt and vt are initialized as vectors of 0's, the authors of Adam observe that they are biased towards zero, especially during the initial time steps, and especially when the decay rates are small (i.e. β1 and β2 are close to 1)
+- They counteract these biases by computing bias-corrected first and second moment estimates:
+- `m^t = mt / (1−β1^t)`
+- `v^t = vt / (1−β2^t)`
+- Parameter update - 
+  - `θt+1 = θt − η / sqrt(v^t + ϵ) * m^t`
 
+
+#### Visualization of algorithms
+
+- Below images show the behaviour of the algorithms at a saddle point, i.e. a point where one dimension has a positive slope, while the other dimension has a negative slope, which pose a difficulty for SGD as we mentioned before. Notice here that SGD, Momentum, and NAG find it difficulty to break symmetry, although the two latter eventually manage to escape the saddle point, while Adagrad, RMSprop, and Adadelta quickly head down the negative slope.
+- <img src = "http://ruder.io/content/images/2016/09/contours_evaluation_optimizers.gif"/> <img src = "http://ruder.io/content/images/2016/09/saddle_point_evaluation_optimizers.gif"/>
+- The adaptive learning-rate methods, i.e. Adagrad, Adadelta, RMSprop, and Adam are most suitable and provide the best convergence for these scenarios
+
+#### Which optimizer to use?
+
+- RMSprop is an extension of Adagrad that deals with its radically diminishing learning rates. It is identical to Adadelta, except that Adadelta uses the RMS of parameter updates in the numinator update rule. Adam, finally, adds bias-correction and momentum to RMSprop. Insofar, RMSprop, Adadelta, and Adam are very similar algorithms that do well in similar circumstances.Bias-correction helps Adam slightly outperform RMSprop towards the end of optimization as gradients become sparser. Insofar, Adam might be the best overall choice
