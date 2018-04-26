@@ -32,21 +32,21 @@ print('List of classes in train directory : ', os.listdir(train_dir))
 
 # list of classes in train directory
 list_class_num = os.listdir(train_dir)
-list_class_dct = {'1':'Blouse',
-				  '2':'Cloak',
-				  '3':'Coat',
-				  '4':'Jacket',
-				  '5':'Jersey',
-				  '6':'Long Dress',
-				  '7':'Polo Shirt',
-				  '8':'Robe',
-				  '9':'Shirt',
-				  '10':'Short Dress',
-				  '11':'Suit',
-				  '12':'Sweater',
-				  '13':'Undergarment',
-				  '14':'Uniform',
-				  '15':'Waistcoat'}
+list_class_dct = {'0':'Blouse',
+				  '1':'Cloak',
+				  '2':'Coat',
+				  '3':'Jacket',
+				  '4':'Jersey',
+				  '5':'Long Dress',
+				  '6':'Polo Shirt',
+				  '7':'Robe',
+				  '8':'Shirt',
+				  '9':'Short Dress',
+				  '10':'Suit',
+				  '11':'Sweater',
+				  '12':'Undergarment',
+				  '13':'Uniform',
+				  '14':'Waistcoat'}
 print('Checking if the dictionary was defined properly : ', list_class_dct['11'])
 
 for class_num, class_str in list_class_dct:
