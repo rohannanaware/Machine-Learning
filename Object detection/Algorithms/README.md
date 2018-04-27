@@ -257,9 +257,13 @@ and the ground truth
 * [Face Detection using Haar Cascades ](https://docs.opencv.org/3.4.1/d7/d8b/tutorial_py_face_detection.html)
 * [Cascade Classifier Training ](https://docs.opencv.org/3.4.1/dc/d88/tutorial_traincascade.html)
 
+# 11. Residual nets
+
+- Reference - 
+  - [Link - arxiv](https://arxiv.org/abs/1512.03385)
+  - [Why ResNets Are A Major Breakthrough In Image Processing](https://analyticsindiamag.com/why-resnets-are-a-major-breakthrough-in-image-processing/)
 
 # Questions
-
 - Mean average predcision calculation
 
 
