@@ -260,8 +260,9 @@ and the ground truth
 # 11. Residual nets
 
 - Reference - 
-  - [Link - arxiv](https://arxiv.org/abs/1512.03385)
+  - [arxiv](https://arxiv.org/abs/1512.03385)
   - [Why ResNets Are A Major Breakthrough In Image Processing](https://analyticsindiamag.com/why-resnets-are-a-major-breakthrough-in-image-processing/)
+  - [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/)
 
 # Questions
 - Mean average predcision calculation
