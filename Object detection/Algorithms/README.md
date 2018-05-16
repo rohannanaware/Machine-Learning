@@ -4,6 +4,7 @@
 * [Multi - class vs. multi - label classification](#multi-class-vs-multi-label-classification)
 * [Object detection techniques](#object-detection-techniques)
 * [Questions/ further exploration](#questions)
+* [Motion detection](https://www.researchgate.net/publication/265964999_Automatic_detection_of_suspicious_behavior_of_pickpockets_with_track-based_features_in_a_shopping_mall)
 
 # Using CNN for object detection
 
