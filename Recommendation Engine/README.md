@@ -12,3 +12,8 @@
     - **Content-based filtering** approaches utilize a series of discrete characteristics of an item in order to recommend additional items with similar properties. These approaches are often combined as Hybrid recommendation systems
 
 ## Collaborative filtering
+
+- Reference links
+  - [Wikipedia](https://en.wikipedia.org/wiki/Collaborative_filtering)
+  - [Receommender systems](http://recommender-systems.org/collaborative-filtering/)
+  
