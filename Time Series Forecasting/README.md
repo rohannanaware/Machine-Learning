@@ -20,4 +20,13 @@
   - **What’s the best way to correct for autocorrelation: adding AR terms or adding MA terms?**: 
     - [Positive autocorrelation](http://www.dummies.com/education/economics/econometrics/patterns-of-autocorrelation/) : AR term
     - Negative autocorrelation : MA term
-    - Positive autocorrelation : <img src = "http://d2r5da613aq50s.cloudfront.net/wp-content/uploads/415047.image3.jpg">
+    - <img src = "http://d2r5da613aq50s.cloudfront.net/wp-content/uploads/415047.image3.jpg">
+
+## Identifying the order of differencing in an ARIMA model
+
+- **Rule 1: If the series has positive autocorrelations out to a high number of lags, then it probably needs a higher order of differencing**
+  - Differencing tends to introduce negative correlation
+- **Rule 2: If the lag-1 autocorrelation is zero or negative, or the autocorrelations are all small and patternless, then the series does not need a higher order of  differencing. If the lag-1 autocorrelation is -0.5 or more negative, the series may be overdifferenced.  BEWARE OF OVERDIFFERENCING!!**
+- **Rule 3: The optimal order of differencing is often the order of differencing at which the standard deviation is lowest**
+- **Rule 4: A model with no orders of differencing assumes that the original series is stationary (mean-reverting). A model with one order of differencing assumes that the original series has a constant average trend (e.g. a random walk or SES-type model, with or without growth). A model with two orders of total differencing assumes that the original series has a time-varying trend (e.g. a random trend or LES-type model)**
+- **Rule 5: A model with no orders of differencing normally includes a constant term (which allows for a non-zero mean value). A model with two orders of total differencing normally does not include a constant term. In a model with one order of total differencing, a constant term should be included if the series has a non-zero average trend**
