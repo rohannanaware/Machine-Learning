@@ -17,4 +17,7 @@
     - q is the number of lagged forecast errors in the prediction equation
   - To identify the appropriate ARIMA model for Y, you begin by **determining the order of differencing (d)** needing to stationarize the series and remove the gross features of seasonality, perhaps in conjunction with a variance-stabilizing transformation such as logging or deflating. If you stop at this point and predict that the differenced series is constant, you have merely fitted a random walk or random trend model.  However, the stationarized series may still **have autocorrelated errors, suggesting that some number of AR terms (p ≥ 1) and/or some number MA terms (q ≥ 1) are also needed in the forecasting equation**
     - [Homescedasticity](https://www.statisticssolutions.com/homoscedasticity/) vs. [Heteroscedasticity](http://www.statsmakemecry.com/smmctheblog/confusing-stats-terms-explained-heteroscedasticity-heteroske.html)
-
+  - **What’s the best way to correct for autocorrelation: adding AR terms or adding MA terms?**: 
+    - [Positive autocorrelation](http://www.dummies.com/education/economics/econometrics/patterns-of-autocorrelation/) : AR term
+    - Negative autocorrelation : MA term
+    - Positive autocorrelation : <img src = "http://d2r5da613aq50s.cloudfront.net/wp-content/uploads/415047.image3.jpg">
