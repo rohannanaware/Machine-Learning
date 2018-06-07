@@ -31,5 +31,5 @@
     - After all objects have been allocated to a cluster, retest the similarity of objects against the current prototypes. If you find that an object is found such that its nearest to another cluster prototype, update the prototypes of both the clusters
     - Repeat above step until no object changes its cluster
     
-- The objects are assigned into clusters by considering the **dissimilarity measure** -
-  - 
+- The objects are assigned into clusters by considering the **dissimilarity measure**
+  <img src = "https://cdn-images-1.medium.com/max/800/1*HxkHjH647N_9wKjqUBeJiw.png">
