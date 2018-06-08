@@ -50,9 +50,11 @@
   - Reference
     - [Wikipedia](https://en.wikipedia.org/wiki/K-means_clustering#Standard_algorithm)
     - [Stackoverflow](https://stats.stackexchange.com/questions/77850/assign-weights-to-variables-in-cluster-analysis)
+    - [Stanford - Feature weighting in K-means clustering](https://link.springer.com/content/pdf/10.1023%2FA%3A1024016609528.pdf)
+    - [AnalyticsVidhya](https://www.analyticsvidhya.com/blog/2013/11/getting-clustering-right/)
     <img src = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/K-means_convergence.gif/220px-K-means_convergence.gif">
 
 - **Weighted clustering in k-means**  
   - The **choice of measurement units gives rise to relative weights of the variables.** Expressing a variable in smaller units will lead to a larger range for that variable, which will then have a large effect on the resulting structure. On the other hand, by standardizing one attempts to give all variables an equal weight, in the hope of achieving objectivity
   - Procedure to add importance of variables during clustering
-    - First standardize all variables (e.g. by their range). Then multiply each standardized variable with their weight. Then do the cluster analysis
+    - **First standardize all variables (e.g. by their range). Then multiply each standardized variable with their weight. Then do the cluster analysis**
