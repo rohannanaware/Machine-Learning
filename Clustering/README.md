@@ -1,5 +1,10 @@
 # Clustering / Similarity measurement algorithms
 
+- This is an extension for the [Time Series Forecasting work](https://github.com/rohan193/Machine-Learning/tree/master/Time%20Series%20Forecasting)
+  - Overall market sizing using Time Series Forecasting
+  - **Analogue identification using clustering or similarity measurement techniques**
+  - Forecasting share of market that the analogue can capture using Time Series Forecasting
+    
 ## Cosine similarity
 
 - Reference:
@@ -32,4 +37,17 @@
     - Repeat above step until no object changes its cluster
     
 - The objects are assigned into clusters by considering the **dissimilarity measure**
-  <img src = "https://cdn-images-1.medium.com/max/800/1*HxkHjH647N_9wKjqUBeJiw.png">
+    <img src = "https://cdn-images-1.medium.com/max/800/1*HxkHjH647N_9wKjqUBeJiw.png">
+    
+# K-means clustering
+
+- K-means clustering technique working
+  - Reference
+    - [Wikipedia](https://en.wikipedia.org/wiki/K-means_clustering#Standard_algorithm)
+    <img src = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/K-means_convergence.gif/220px-K-means_convergence.gif">
+
+- **Weighted clustering in k-means**
+  - [Link](https://stats.stackexchange.com/questions/77850/assign-weights-to-variables-in-cluster-analysis)
+  - The **choice of measurement units gives rise to relative weights of the variables.** Expressing a variable in smaller units will lead to a larger range for that variable, which will then have a large effect on the resulting structure. On the other hand, by standardizing one attempts to give all variables an equal weight, in the hope of achieving objectivity
+  - Procedure to add importance of variables during clustering
+    - First standardize all variables (e.g. by their range). Then multiply each standardized variable with their weight. Then do the cluster analysis
