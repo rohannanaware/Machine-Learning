@@ -5,6 +5,11 @@
   - **Analogue identification using clustering or similarity measurement techniques**
   - Forecasting share of market that the analogue can capture using Time Series Forecasting
     
+# Index
+- [Cosine similarity](#cosine-similarity)
+- [K-Prototype in Clustering](#k-prototype-in-clustering)
+- [K-means clustering](#k-means-clustering)
+
 ## Cosine similarity
 
 - Reference:
@@ -44,10 +49,10 @@
 - K-means clustering technique working
   - Reference
     - [Wikipedia](https://en.wikipedia.org/wiki/K-means_clustering#Standard_algorithm)
+    - [Stackoverflow](https://stats.stackexchange.com/questions/77850/assign-weights-to-variables-in-cluster-analysis)
     <img src = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/K-means_convergence.gif/220px-K-means_convergence.gif">
 
-- **Weighted clustering in k-means**
-  - [Link](https://stats.stackexchange.com/questions/77850/assign-weights-to-variables-in-cluster-analysis)
+- **Weighted clustering in k-means**  
   - The **choice of measurement units gives rise to relative weights of the variables.** Expressing a variable in smaller units will lead to a larger range for that variable, which will then have a large effect on the resulting structure. On the other hand, by standardizing one attempts to give all variables an equal weight, in the hope of achieving objectivity
   - Procedure to add importance of variables during clustering
     - First standardize all variables (e.g. by their range). Then multiply each standardized variable with their weight. Then do the cluster analysis
