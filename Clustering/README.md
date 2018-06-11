@@ -58,3 +58,17 @@
   - The **choice of measurement units gives rise to relative weights of the variables.** Expressing a variable in smaller units will lead to a larger range for that variable, which will then have a large effect on the resulting structure. On the other hand, by standardizing one attempts to give all variables an equal weight, in the hope of achieving objectivity
   - Procedure to add importance of variables during clustering
     - **First standardize all variables (e.g. by their range). Then multiply each standardized variable with their weight. Then do the cluster analysis**
+
+- **Steps to perform cluster analysis**
+  1. **Hypothesis testing** : Try to identify all possible variables that can help segment the data regardless of its availability
+  2. **Initial shortlist of variable** : Once we have all possible variable, start selecting variable as per the data availability
+  3. **Visualize the data** : It is very important to know the population spread across the selected variable before starting any analysis. Viz. is easier for lower dimension data but gets complicated post 3 dimensions
+  4. **Data cleaning** : Cluster analysis is very sensitive to outliers. It is very important to clean data on all variables taken into consideration. There are two industry standard ways to do this exercise :
+    - Remove the outliers : (Not recommended in case the total data-points are low in number) We remove the data-points beyond mean +/- 3 * standard deviation
+    - Capping and flouring of variables : (Recommended approach) We cap and flour all data-points at 1 and 99 percentile
+  5. **Variable clustering** : This step is performed to cluster variables capturing similar attributes in data. Also choosing only one variable from each variable cluster will not drop the sepration drastically compared to considering all variables. Remember, the idea is to take minimum number of variables to justify the seperation to make the analysis easier and less time consuming
+  6. **Clustering**
+  7. **Convergence of clusters** : A good cluster analysis has all clusters with population between 5-30% of the overall base. If any of the cluster is beyond the limit than repeat the procedure with additional number of variables
+  8. **Profiling of the clusters**
+
+
