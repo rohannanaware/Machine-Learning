@@ -3,6 +3,7 @@
   - [AnalyticsVidhya](https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/)
   - [Duke ARIMA](https://people.duke.edu/~rnau/411arim.htm)
   - [Forecasting for the Pharmaceutical Industry - Models for New Product and In-Market Forecasting and How to Use Them](http://www.sadrabiotech.com/catalog/GOOD%20Forecasting%20for%20the%20Pharmaceutical%20Industry.pdf)
+  - ATAR model
 
 ## Introduction to ARIMA: nonseasonal models
 
