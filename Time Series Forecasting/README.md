@@ -1,13 +1,7 @@
 # Time Series Forecasting content summary
 
 - [Duke University](#duke-university)
-
-- Reference:
-  - [AnalyticsVidhya](https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/)
-  - [Duke ARIMA](https://people.duke.edu/~rnau/411arim.htm)
-  - [Forecasting for the Pharmaceutical Industry - Models for New Product and In-Market Forecasting and How to Use Them](http://www.sadrabiotech.com/catalog/GOOD%20Forecasting%20for%20the%20Pharmaceutical%20Industry.pdf)
-  - ATAR model
-
+- [Reference](#reference)
 
 # Duke University
 
@@ -17,9 +11,8 @@
     1. Determine whether your original time series needs any **nonlinear transformation(s)** such as logging and/or deflating and/or raising-to-some-power in order to be converted to a form where its **local random variations are consistent** over time and generally symmetric in appearance
     2. Let Y denote the time series you end up with after step 1. If Y is still “nonstationary” at this point, i.e., if it has a linear trend or a nonlinear or randomly-varying trend or exhibits random-walk behavior, then **apply a first-difference transformation**, i.e., construct a new variable that consists of the period-to-period changes in Y
     *How do I determine if a series is stationary or not? Mean, Variance, Auto-correlation?* - [Ref](https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/)
-    3. If it STILL looks non-stationary after a first-difference transformation, which may be the case if Y was a relatively smoothly-varying series to begin with, then apply another **first-difference transformation** i.e., take the first-difference-of-the-first difference
+    3. If it STILL looks non-stationary after a first-difference transformation, which may be the case if Y was a relatively smoothly-varying series to begin with, then **apply another first-difference transformation** i.e., take the first-difference-of-the-first difference
         - Let “d” denote the **total number of differences** that were applied in getting to this point, which will be either 0, 1, or 2
-    *Is there any logic as to why I'm adding the terms that I'm adding??*
     4. Let y denote the **“stationarized”** time series you have at this stage. **A stationarized time series has no trend, a constant variance over time, and constant “wiggliness” over time**. Then the **ARIMA equation** for predicting y takes the following form: 
         - `Forecast for y at time t = constant + weighted sum of the last p values of y + weighted sum of the last q forecast error`
         -   …where “p” and “q” are small integers and the weights (coefficients) may be positive or negative. In most cases either p is zero or q is zero, and p+q is less than or equal to 3, so there aren’t very many terms on the right-hand-side of this equation
@@ -28,13 +21,12 @@
 - The resulting model is called an **“ARIMA(p,d,q)”** model if the constant is assumed to be zero, and it is an **“ARIMA(p,d,q)+constant”** model if the constant is not zero. Thus, an ARIMA model is completely specified by **three small integers**—p, d, and q—and the presence or absence of a constant in the equation
 - The term ARIMA is composed of “AR”, “I”, and “MA”, where the “I” stands for “integrated.” The rationale for the latter term is that a **time series that needs to be differenced in order to be made stationary is called an “integrated” series**
 *(first you make the series stationary - non-linear trans., differencing etc., then you determine the weights for p and q terms amd the value of constant term)*
-- The tricky step in this procedure is step 4, in which you **determine the values of p and q** that should be used in the equation for predicting the stationarized series y. One way is to use some **standard combinations of p and q** that come with practice, other systematic way is to look at the **plots of autocorrelations and partial autocorrelations pf y**
+- The tricky step in this procedure is step 4, in which you **determine the values of p and q** that should be used in the equation for predicting the stationarized series y. One way is to use some **standard combinations of p and q** that come with practice, other systematic way is to look at the **plots of autocorrelations and partial autocorrelations of y**
     - **Autocorrelation** - The autocorrelation of y at lag k is the correlation between y and itself lagged by k periods, i.e., it is the correlation between yt and yt-k
     - **Partial autocorrelation** - The partial autocorrelation of y at lag k is the **coefficient of y_LAGk** in a regression of y on y_LAG1, y_LAG2, up to y_LAGk. (*Thus, the partial autocorrelation of y at lag 1 is the same as the autocorrelation of y at lag 1.???*)
-        - The way to interpret the partial autocorrelation at lag k is that it is the **amount of correlation between y and y_LAGk that is not explained by lower-order autocorrelations** - lower order meaning t-1 upto t-k+1 - y_LAG1, y_LAG2, up to y_LAGk-1 - [Ref](https://en.wikipedia.org/wiki/Partial_autocorrelation_function). **Given a time series z_{t}, the partial autocorrelation of lag k, denoted alpha(k), is the autocorrelation between z_{t} and z_{{t+k}} with the linear dependence of z_{t} on z_{{t+1}} through z_{t+k-1} z_{t+k-1} removed; equivalently, it is the autocorrelation between z_{t} and z_{{t+k}} that is not accounted for by lags 1 to k − 1, inclusive**
+        - The way to interpret the partial autocorrelation at lag k is that it is the **amount of correlation between y and y_LAGk that is not explained by lower-order autocorrelations** - lower order meaning t-1 upto t-k+1 - y_LAG1, y_LAG2, up to y_LAGk-1 - [Ref](https://en.wikipedia.org/wiki/Partial_autocorrelation_function). **Given a time series z_{t}, the partial autocorrelation of lag k, denoted alpha(k), is the autocorrelation between z_{t} and z_{{t+k}} with the linear dependence of z_{t} on z_{{t+1}} through z_{t+k-1} removed; equivalently, it is the autocorrelation between z_{t} and z_{{t+k}} that is not accounted for by lags 1 to k − 1, inclusive**
         
-
-
+        
 ## Introduction to ARIMA: nonseasonal models
 
 - **ARIMA(p,d,q) forecasting equation:** 
@@ -62,3 +54,11 @@
 - **Rule 3: The optimal order of differencing is often the order of differencing at which the standard deviation is lowest**
 - **Rule 4: A model with no orders of differencing assumes that the original series is stationary (mean-reverting). A model with one order of differencing assumes that the original series has a constant average trend (e.g. a random walk or SES-type model, with or without growth). A model with two orders of total differencing assumes that the original series has a time-varying trend (e.g. a random trend or LES-type model)**
 - **Rule 5: A model with no orders of differencing normally includes a constant term (which allows for a non-zero mean value). A model with two orders of total differencing normally does not include a constant term. In a model with one order of total differencing, a constant term should be included if the series has a non-zero average trend**
+
+
+# Reference
+  - [AnalyticsVidhya](https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/)
+  - [Duke ARIMA](https://people.duke.edu/~rnau/411arim.htm)
+  - [Forecasting for the Pharmaceutical Industry - Models for New Product and In-Market Forecasting and How to Use Them](http://www.sadrabiotech.com/catalog/GOOD%20Forecasting%20for%20the%20Pharmaceutical%20Industry.pdf)
+  - ATAR model
+
