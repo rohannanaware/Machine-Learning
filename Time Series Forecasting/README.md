@@ -32,7 +32,7 @@
   2. On the other hand, if the **PACF plot cuts off sharply at lag k while there is a more gradual decay in the ACF plot**, then set p=k and q=0. This is a so-called “AR(p) signature”
   3. If there is a single spike at lag 1 in both the ACF and PACF plots, then set p=1 and q=0 if it is positive (this is an AR(1) signature), and set p=0 and q=1 if it is negative (this is an MA(1) signature)
   *Need more details on the intuition of these rules*
-        
+<img src = "https://github.com/rohan193/Machine-Learning/blob/master/Time%20Series%20Forecasting/images/ACF-PACF%20for%20AR%20and%20MA%20series.png?raw=true">
         
 ## Introduction to ARIMA: nonseasonal models
 
