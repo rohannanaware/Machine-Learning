@@ -18,11 +18,17 @@
     2. Let Y denote the time series you end up with after step 1. If Y is still “nonstationary” at this point, i.e., if it has a linear trend or a nonlinear or randomly-varying trend or exhibits random-walk behavior, then **apply a first-difference transformation**, i.e., construct a new variable that consists of the period-to-period changes in Y
     *How do I determine if a series is stationary or not? Mean, Variance, Auto-correlation?* - [Ref](https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/)
     3. If it STILL looks non-stationary after a first-difference transformation, which may be the case if Y was a relatively smoothly-varying series to begin with, then apply another **first-difference transformation** i.e., take the first-difference-of-the-first difference
+        - Let “d” denote the **total number of differences** that were applied in getting to this point, which will be either 0, 1, or 2
     *Is there any logic as to why I'm adding the terms that I'm adding??*
     4. Let y denote the **“stationarized”** time series you have at this stage. **A stationarized time series has no trend, a constant variance over time, and constant “wiggliness” over time**. Then the **ARIMA equation** for predicting y takes the following form: 
         - `Forecast for y at time t = constant + weighted sum of the last p values of y + weighted sum of the last q forecast error`
         -   …where “p” and “q” are small integers and the weights (coefficients) may be positive or negative. In most cases either p is zero or q is zero, and p+q is less than or equal to 3, so there aren’t very many terms on the right-hand-side of this equation
         - The lagged values of y that appear in the equation are called **“autoregressive” (AR) terms**, and the lagged values of the forecast errors are called **“moving-average”** (MA) terms
+    5. The forecast for the original series at period t, based on data observed up to period t-1, is obtained from the forecast for y by **undoing the various transformations that were applied along the way**, i.e., undifferencing, unlogging, undeflating, and/or unpowering, as the case may be
+- The resulting model is called an **“ARIMA(p,d,q)”** model if the constant is assumed to be zero, and it is an **“ARIMA(p,d,q)+constant”** model if the constant is not zero. Thus, an ARIMA model is completely specified by **three small integers**—p, d, and q—and the presence or absence of a constant in the equation
+- The term ARIMA is composed of “AR”, “I”, and “MA”, where the “I” stands for “integrated.” The rationale for the latter term is that a **time series that needs to be differenced in order to be made stationary is called an “integrated” series**
+*(first you make the series stationary - non-linear trans., differencing etc., then you determine the weights for p and q terms amd the value of constant term)*
+- The tricky step in this procedure is step 4, in which you **determine the values of p and q** that should be used in the equation for predicting the stationarized series y. One way is to use some **standard combinations of p and q** that come with practice, other systematic way is to look at the **plots of autocorrelations and partial autocorrelations pf y**
         
 
 
