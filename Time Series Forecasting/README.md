@@ -32,8 +32,15 @@
   2. On the other hand, if the **PACF plot cuts off sharply at lag k while there is a more gradual decay in the ACF plot**, then set p=k and q=0. This is a so-called “AR(p) signature”
   3. If there is a single spike at lag 1 in both the ACF and PACF plots, then set p=1 and q=0 if it is positive (this is an AR(1) signature), and set p=0 and q=1 if it is negative (this is an MA(1) signature)
   *Need more details on the intuition of these rules*
-<img src = "https://github.com/rohan193/Machine-Learning/blob/master/Time%20Series%20Forecasting/images/ACF-PACF%20for%20AR%20and%20MA%20series.png?raw=true">
-        
+      <img src = "https://github.com/rohan193/Machine-Learning/blob/master/Time%20Series%20Forecasting/images/ACF-PACF%20for%20AR%20and%20MA%20series.png?raw=true">
+  *How are the thresholds for ACF and PACF plots calculated? [Ref](https://stackoverflow.com/questions/29996910/significance-level-of-acf-and-pacf-in-r)*
+
+- Having made a good guess as to the correct values of p and q, you then **try fitting a model** with these values and look at the **ACF and PACF plots of the residuals**
+- Ideally there should not be any significant spikes in the values of ACF and PACF especially at lower lags
+- **Also, if you have correctly identified the model, the *highest-order AR or MA coefficient* should be *significantly different from zero* according to the usual standard for a regression model, i.e., it should have a *t-stat greater than 2* in magnitude and correspondingly a *P-value less than 0.05*. In applying this test, you only look at the highest order coefficient, not the lower order ones** --*Need more reading*
+- If the ACF and PACF plot look good but the highest-order coefficient is NOT significant, then you should **try reducing p or q by 1**, as the case may be
+- Now, what if there ARE some significant residual autocorrelations or partial autocorrelations at the first few lags? **Spikes in the residual ACF plot at lags 1, 2, or 3 signify a need for a higher value of q, and spikes in the residual PACF plot at lags 1, 2, or 3 indicate a need for a higher order of p**
+
 ## Introduction to ARIMA: nonseasonal models
 
 - **ARIMA(p,d,q) forecasting equation:** 
