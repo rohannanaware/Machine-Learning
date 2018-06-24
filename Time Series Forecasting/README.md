@@ -29,6 +29,9 @@
 - The term ARIMA is composed of “AR”, “I”, and “MA”, where the “I” stands for “integrated.” The rationale for the latter term is that a **time series that needs to be differenced in order to be made stationary is called an “integrated” series**
 *(first you make the series stationary - non-linear trans., differencing etc., then you determine the weights for p and q terms amd the value of constant term)*
 - The tricky step in this procedure is step 4, in which you **determine the values of p and q** that should be used in the equation for predicting the stationarized series y. One way is to use some **standard combinations of p and q** that come with practice, other systematic way is to look at the **plots of autocorrelations and partial autocorrelations pf y**
+    - **Autocorrelation** - The autocorrelation of y at lag k is the correlation between y and itself lagged by k periods, i.e., it is the correlation between yt and yt-k
+    - **Partial autocorrelation** - The partial autocorrelation of y at lag k is the **coefficient of y_LAGk** in a regression of y on y_LAG1, y_LAG2, up to y_LAGk. (*Thus, the partial autocorrelation of y at lag 1 is the same as the autocorrelation of y at lag 1.???*)
+        - The way to interpret the partial autocorrelation at lag k is that it is the **amount of correlation between y and y_LAGk that is not explained by lower-order autocorrelations** - lower order meaning t-1 upto t-k+1 - y_LAG1, y_LAG2, up to y_LAGk-1 - [Ref](https://en.wikipedia.org/wiki/Partial_autocorrelation_function). **Given a time series z_{t}, the partial autocorrelation of lag k, denoted alpha(k), is the autocorrelation between z_{t} and z_{{t+k}} with the linear dependence of z_{t} on z_{{t+1}} through z_{t+k-1} z_{t+k-1} removed; equivalently, it is the autocorrelation between z_{t} and z_{{t+k}} that is not accounted for by lags 1 to k − 1, inclusive**
         
 
 
