@@ -43,6 +43,9 @@
 ## [Slides on seasonal and nonseasonal ARIMA models (pdf)](https://people.duke.edu/~rnau/Slides_on_ARIMA_models--Robert_Nau.pdf)
 
 
+
+
+
 ## Introduction to ARIMA: nonseasonal models
 
 - **ARIMA(p,d,q) forecasting equation:** 
