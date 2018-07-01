@@ -17,6 +17,9 @@
     - industry_volume.csv: (hectoliters) Holds industry actual beer volume
     - demographics.csv: Holds demographic details (Yearly income in $)
 
+- **Problem scope**
+    - Volume forecast - Forecast the demand volume for Jan’18 of all agency-SKU combination
+    - SKU recommendations - Suggest 2 SKUs which can be sold by Agency06 & Agency14. These two agencies are new and company wants to find out which two products would be the best products for these two agencies.
 # Reference
 
 - [Otexts tutorials](https://www.otexts.org/fpp)
