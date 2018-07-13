@@ -81,4 +81,5 @@
     - [Seasonal ARIMA](https://faculty.fuqua.duke.edu/~rnau/Decision411_2007/seasarim.htm)
   - [Forecasting for the Pharmaceutical Industry - Models for New Product and In-Market Forecasting and How to Use Them](http://www.sadrabiotech.com/catalog/GOOD%20Forecasting%20for%20the%20Pharmaceutical%20Industry.pdf)
   - ATAR model
+  - [Why use Differencing and Box-Cox transformation in a time series?](https://stats.stackexchange.com/questions/253917/why-use-differencing-and-box-cox-in-time-series)
 
