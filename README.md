@@ -1,8 +1,6 @@
 # Machine-Learning
 Some of the ML codes I have come across
 
-# Quick links
-
 ## Computer vision
 
   - [Object detection and tracking algorithms](https://github.com/rohan193/Machine-Learning/tree/master/Object%20detection/Algorithms#object-detection-and-tracking-algorithms)
