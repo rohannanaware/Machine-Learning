@@ -11,4 +11,4 @@ Some of the ML codes I have come across
 
 ## Time Series Forecasting
 
-  - [Notes](https://github.com/rohan193/Machine-Learning/edit/master/Time%20Series%20Forecasting/README.md)
+  - [Notes](https://github.com/rohan193/Machine-Learning/blob/master/Time%20Series%20Forecasting/README.md)
