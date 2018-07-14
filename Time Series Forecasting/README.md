@@ -84,4 +84,4 @@
   - Box-Cox transformations
     - [Why use Differencing and Box-Cox transformation in a time series?](https://stats.stackexchange.com/questions/253917/why-use-differencing-and-box-cox-in-time-series)
     - [Choosing lambda](https://www.otexts.org/fpp/2/4)
-
+  - [Auto arima](https://www.rdocumentation.org/packages/forecast/versions/8.4/topics/auto.arima)
