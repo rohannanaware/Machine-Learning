@@ -25,3 +25,4 @@
 - [Connecting Generative Adversarial Networks and Actor-Critic Methods](https://arxiv.org/pdf/1610.01945.pdf)
 - [Interpreting images as samples from a probability distribution](https://bamos.github.io/2016/08/09/deep-completion/#step-1-interpreting-images-as-samples-from-a-probability-distribution)
 - [deeplearning4j](https://github.com/deeplearning4j)
+- [Ian Goodfellow’s GAN Slides](http://www.iangoodfellow.com/slides/2016-12-04-NIPS.pdf)
