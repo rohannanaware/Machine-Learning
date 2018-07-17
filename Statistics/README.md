@@ -1,11 +1,10 @@
 # Statistics guide
 
 - Onlinestatsbook
-  - [1. Introduction](#1.-introduction)
-  - [2. Graphing Distributions](#2.-graphing-distributions)
+  - [1. Introduction](#introduction)
+  - [2, Graphing Distributions](#graphing-distributions)
 
-
-## 1. Introduction
+## Introduction
 - **What are Statistics?** - Statistics include numerical facts and figures
 - **Decriptive Statisitcs** - Descriptive statistics are numbers that are used to summarize and describe data. Descriptive statistics are just descriptive. They do not involve generalizing beyond the data at hand
 - **Inferential statistics** - The mathematical procedures whereby we convert information about the sample into intelligent guesses about the population fall under the rubric of inferential statistics
@@ -26,7 +25,7 @@
 - **Linear transformations** - Multiplying and adding a constant
 - **Logarithms** - Log transformations reduce positive skew
 
-## 2. Graphing Distributions
+## Graphing Distributions
 
 
 
