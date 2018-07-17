@@ -1,5 +1,9 @@
 # Statistics guide
 
+- Onlinestatsbook
+  - [1. Introduction](#1.-introduction)
+
+
 ## 1. Introduction
 - **What are Statistics?** - Statistics include numerical facts and figures
 - **Decriptive Statisitcs** - Descriptive statistics are numbers that are used to summarize and describe data. Descriptive statistics are just descriptive. They do not involve generalizing beyond the data at hand
@@ -18,7 +22,12 @@
   - For continuous variables we use grouped frequency distribution
   - **Probability densities** - To represent the probability associated with an arbitrary movement (which can take any positive amount of time), we must represent all these potential times at once. Distributions for continuous variables are called grouped frequecy dist. or probabilty density
   - **Shapes of distributions** - Positive skew/Right tailed, Negative skew, Bimodal(distribution with 2 peaks), leptokurtic & platykurtic (higher/fewer scores in the tails)
-  
+- **Linear transformations** - Multiplying and adding a constant
+- **Logarithms** - Log transformations reduce positive skew
+
+## 2. Graphing Distributions
+
+
 
 
 ## Reference
