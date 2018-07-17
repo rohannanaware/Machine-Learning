@@ -15,8 +15,13 @@
     - **Ratio scales** - Ratio scale is an interval scale with the additional property that its zero position indicates the absence of the quantity being measured
 - **Distributions** - 
   - Frequency distribution is a plot of the number of occurences of each level of a variable in a given sample of data
+  - For continuous variables we use grouped frequency distribution
+  - **Probability densities** - To represent the probability associated with an arbitrary movement (which can take any positive amount of time), we must represent all these potential times at once. Distributions for continuous variables are called grouped frequecy dist. or probabilty density
+  - **Shapes of distributions** - Positive skew/Right tailed, Negative skew, Bimodal(distribution with 2 peaks), leptokurtic & platykurtic (higher/fewer scores in the tails)
+  
 
 
 ## Reference
 
 - [Onlinestatsbook](http://onlinestatbook.com/2/index.html)
+- [Why is the probability zero for any given value of a normal distribution?](https://stats.stackexchange.com/questions/60702/why-is-the-probability-zero-for-any-given-value-of-a-normal-distribution?newreg=bc7ce05c40af4b8c909d6fa88c335f89)
