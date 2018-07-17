@@ -27,6 +27,17 @@
 
 ## Graphing Distributions
 
+- **Qualitative variables** - Frequency displays
+- **Quantitative variables**
+  - Stem and Leaf Displays
+  - Stem and Leaf Displays
+  - Histograms
+  - Frequency Polygons
+  - Box Plots
+  - Box Plot Demonstration
+  - Bar Charts
+  - Line Graphs
+  - Dot Plots
 
 
 
