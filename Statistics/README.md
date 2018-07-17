@@ -2,7 +2,7 @@
 
 - Onlinestatsbook
   - [1. Introduction](#1.-introduction)
-  - [2. Graphing Distributions](2.-graphing-distributions)
+  - [2. Graphing Distributions](#2.-graphing-distributions)
 
 
 ## 1. Introduction
