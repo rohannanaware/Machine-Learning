@@ -10,3 +10,7 @@ Some of the ML codes I have come across
 ## Time Series Forecasting
 
   - [Notes](https://github.com/rohan193/Machine-Learning/blob/master/Time%20Series%20Forecasting/README.md)
+
+## Statistics
+
+  - [Notes](https://github.com/rohan193/Machine-Learning/blob/master/Statistics/README.md)
