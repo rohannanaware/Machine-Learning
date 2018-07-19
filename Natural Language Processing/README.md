@@ -23,9 +23,12 @@
   - Stemming - Deals with removal of suffixes from the words
   - Lemmatization - Considers the grammar and morphology of the word before making transformations
 - **Object standardization**
-  - Deals with removing texts, phrases that are not present in standard vocabulary dictionaries. Eg. - Internet slangs, hashtags, etc.
+  - Deals with removing/ replacing texts, phrases that are not present in standard vocabulary dictionaries. Eg. - Internet slangs, hashtags, etc.
   
 ## Text to Features (Feature Engineering on text data)
+Techniques that can be used for converting text to features -
+- Syntactic Parsing : Deals with arrangement of words in a pattern that shows relationships among the words. Dependency Grammar and Part of Speech tags are the important attributes of text syntactics
+
 
   
 ## Reference
