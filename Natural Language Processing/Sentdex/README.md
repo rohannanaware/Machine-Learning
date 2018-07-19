@@ -13,7 +13,7 @@ To acquire nltk visit official website -
 - [Nltk github repo](https://github.com/nltk)
 - Text mining vs. NLP
 - Stanford
-  - [Text based tutorials](Given a character sequence and a defined document unit, tokenization is the task of chopping it up into pieces, called tokens , perhaps at the same time throwing away certain characters, such as punctuation)
+  - [Text based tutorials](https://nlp.stanford.edu/IR-book/html/htmledition/)
   - [Video lectures](https://www.youtube.com/watch?v=OQQ-W_63UgQ&list=PL3FW7Lu3i5Jsnh1rnUwq_TcylNr7EkRe6)
 - Regular expressions
   
