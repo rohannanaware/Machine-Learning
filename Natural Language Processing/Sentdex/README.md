@@ -9,6 +9,14 @@ To acquire nltk visit official website -
 - [Unofficial binary](https://www.lfd.uci.edu/~gohlke/pythonlibs/)
   - Extract the whl file and use `pip install nltk-3.3-py2.py3-none-any.whl`
 
+## Stemming
+
+- A part of data pre-processing that takes words and returns the root stem of the words. Eg. Riding, Ride, Ridden --root--> Ride
+- Why stem? - Remove multiple variations of words that are carring similar meaning
+- Stemming method used in NLP - [Porter stemmer](https://www.google.co.in/search?q=Porter+stemmer&safe=active)
+
+
+
 ## Reference
 - [Nltk github repo](https://github.com/nltk)
 - Text mining vs. NLP
