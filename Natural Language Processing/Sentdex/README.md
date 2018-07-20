@@ -20,7 +20,9 @@ To acquire nltk visit official website -
 - Why stem? - Remove multiple variations of words that are carring similar meaning
 - Stemming method used in NLP - [Porter stemmer](https://www.google.co.in/search?q=Porter+stemmer&safe=active)
 
+## POS tagging
 
+- How to retrain Punksenttokenizer to learn POS tagging on unseen corpus?
 
 ## Reference
 - [Nltk github repo](https://github.com/nltk)
