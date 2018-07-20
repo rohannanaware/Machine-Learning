@@ -11,7 +11,7 @@ To acquire nltk visit official website -
 
 ## Tokenizing
 - Breaking down the corpus into smaller partts - words / sentences
-- Tokenizers available in nltk - word, sentence, punktsentence(ML based tokenizer that comes pre-trained but can be retrained)
+- Tokenizers available in nltk - word, sentence, [punktsentence](https://dl.acm.org/citation.cfm?id=1245122)(ML based tokenizer that comes pre-trained but can be retrained)
 
 
 ## Stemming
