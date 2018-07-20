@@ -9,6 +9,11 @@ To acquire nltk visit official website -
 - [Unofficial binary](https://www.lfd.uci.edu/~gohlke/pythonlibs/)
   - Extract the whl file and use `pip install nltk-3.3-py2.py3-none-any.whl`
 
+## Tokenizing
+- Breaking down the corpus into smaller partts - words / sentences
+- Tokenizers available in nltk - word, sentence, punktsentence(ML based tokenizer that comes pre-trained but can be retrained)
+
+
 ## Stemming
 
 - A part of data pre-processing that takes words and returns the root stem of the words. Eg. Riding, Ride, Ridden --root--> Ride
