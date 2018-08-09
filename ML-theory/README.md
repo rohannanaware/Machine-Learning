@@ -1,3 +1,13 @@
+## Linear regression
+
+- Assumptions : [1](http://www.statisticssolutions.com/assumptions-of-linear-regression/)
+  - Linear relationship
+  - Multivariate normality
+  - No or little multicollinearity
+  - No auto-correlation
+  - Homoscedasticity
+
+
 ## Logistic regression
 
 [Machine Learning - (Univariate|Simple) Logistic regression](https://gerardnico.com/data_mining/simple_logistic_regression)
