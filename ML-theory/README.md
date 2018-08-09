@@ -1,6 +1,6 @@
 ## Linear regression
 
-- Assumptions : [1](http://www.statisticssolutions.com/assumptions-of-linear-regression/)
+- [Assumptions](http://www.statisticssolutions.com/assumptions-of-linear-regression/)
   - Linear relationship
   - Multivariate normality
   - No or little multicollinearity
