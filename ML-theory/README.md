@@ -37,3 +37,4 @@
 # Reference
 
 - [Stackoverflow](https://stackoverflow.com/questions/12146914/what-is-the-difference-between-linear-regression-and-logistic-regression?answertab=active#tab-top)
+- [Learn ML in 3 months](https://github.com/llSourcell/Learn_Machine_Learning_in_3_Months)
