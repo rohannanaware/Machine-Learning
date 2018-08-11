@@ -7,7 +7,6 @@
   - No auto-correlation
   - Homoscedasticity
 
-
 ## Logistic regression
 
 [Machine Learning - (Univariate|Simple) Logistic regression](https://gerardnico.com/data_mining/simple_logistic_regression)
@@ -23,8 +22,10 @@
 - [A Practical Guide to Tree Based Learning Algorithms](https://sadanand-singh.github.io/posts/treebasedmodels/#disqus_thread)
 - [A Complete Tutorial on Tree Based Modeling from Scratch (in R & Python)](https://www.analyticsvidhya.com/blog/2016/04/complete-tutorial-tree-based-modeling-scratch-in-python/)
 - [Tree-based Methods](https://lagunita.stanford.edu/c4x/HumanitiesScience/StatLearning/asset/trees.pdf)
-- 
 
+## Anova and F-tests
+- [Understanding Analysis of Variance (ANOVA) and the F-test](http://blog.minitab.com/blog/adventures-in-statistics-2/understanding-analysis-of-variance-anova-and-the-f-test)
+- [The Meaning of an F-Test](https://www.youtube.com/watch?v=g9pGHRs-cxc)
 
 # Reference
 
