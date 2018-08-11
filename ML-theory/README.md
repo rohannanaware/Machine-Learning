@@ -23,7 +23,13 @@
 - [A Complete Tutorial on Tree Based Modeling from Scratch (in R & Python)](https://www.analyticsvidhya.com/blog/2016/04/complete-tutorial-tree-based-modeling-scratch-in-python/)
 - [Tree-based Methods](https://lagunita.stanford.edu/c4x/HumanitiesScience/StatLearning/asset/trees.pdf)
 
-## Anova and F-tests
+## GBM
+
+- [Beginners Tutorial on XGBoost and Parameter Tuning in R](https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/)
+- [Featured Talk: #1 Kaggle Data Scientist Owen Zhang](https://nycdatascience.com/blog/meetup/featured-talk-1-kaggle-data-scientist-owen-zhang/)
+- [Complete Guide to Parameter Tuning in XGBoost (with codes in Python)](https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/)
+
+## Anova and F-tests !!!
 - [Understanding Analysis of Variance (ANOVA) and the F-test](http://blog.minitab.com/blog/adventures-in-statistics-2/understanding-analysis-of-variance-anova-and-the-f-test)
 - [The Meaning of an F-Test](https://www.youtube.com/watch?v=g9pGHRs-cxc)
 
