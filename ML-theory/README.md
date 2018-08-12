@@ -25,6 +25,7 @@
 
 ## GBM
 
+- [Ensembles (3): Gradient Boosting](https://www.youtube.com/watch?v=sRktKszFmSk&t=311s)
 - [XGBoost: A Scalable Tree Boosting System](https://arxiv.org/pdf/1603.02754v2.pdf)
 - [Beginners Tutorial on XGBoost and Parameter Tuning in R](https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/)
 - [Featured Talk: #1 Kaggle Data Scientist Owen Zhang](https://nycdatascience.com/blog/meetup/featured-talk-1-kaggle-data-scientist-owen-zhang/)
