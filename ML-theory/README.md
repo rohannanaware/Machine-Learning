@@ -16,6 +16,8 @@
   - or the logit transformation of the probability
 - To summarize, we got still a linear model but it's modeling the probabilities on a non-linear scale
   <img src = "https://gerardnico.com/_media/data_mining/logit_transform.jpg">
+
+
 [FAQ: HOW DO I INTERPRET ODDS RATIOS IN LOGISTIC REGRESSION?](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/)
 - !!! Log likelihood, standard error
 
