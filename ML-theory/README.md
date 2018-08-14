@@ -16,6 +16,8 @@
   - or the logit transformation of the probability
 - To summarize, we got still a linear model but it's modeling the probabilities on a non-linear scale
   <img src = "https://gerardnico.com/_media/data_mining/logit_transform.jpg">
+[FAQ: HOW DO I INTERPRET ODDS RATIOS IN LOGISTIC REGRESSION?](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/)
+- !!! Log likelihood, standard error
 
 ## Decision trees
 
@@ -32,7 +34,7 @@
 - [Featured Talk: #1 Kaggle Data Scientist Owen Zhang](https://nycdatascience.com/blog/meetup/featured-talk-1-kaggle-data-scientist-owen-zhang/)
 - [Complete Guide to Parameter Tuning in XGBoost (with codes in Python)](https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/)
 
-## Anova and F-tests !!!
+## !!! Anova and F-tests
 - [Understanding Analysis of Variance (ANOVA) and the F-test](http://blog.minitab.com/blog/adventures-in-statistics-2/understanding-analysis-of-variance-anova-and-the-f-test)
 - [The Meaning of an F-Test](https://www.youtube.com/watch?v=g9pGHRs-cxc)
 
