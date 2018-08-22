@@ -47,3 +47,4 @@
 - [Learn ML in 3 months](https://github.com/llSourcell/Learn_Machine_Learning_in_3_Months)
 - [QQ plots - StackExchange](https://stats.stackexchange.com/questions/52293/r-qqplot-how-to-see-whether-data-are-normally-distributed)
 - [One tailed vs. two tailed test](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-what-are-the-differences-between-one-tailed-and-two-tailed-tests/)
+- [What method do you think is the best when you are carrying out an ANalysis Of VAriance between groups?](https://www.researchgate.net/post/What_method_do_you_think_is_the_best_when_you_are_carrying_out_an_ANalysis_Of_VAriance_between_groups)
