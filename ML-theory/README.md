@@ -16,6 +16,8 @@
   - or the logit transformation of the probability
 - To summarize, we got still a linear model but it's modeling the probabilities on a non-linear scale
   <img src = "https://gerardnico.com/_media/data_mining/logit_transform.jpg">
+- [Why is logistic regression required? Why not linear regression?](https://discuss.analyticsvidhya.com/t/why-is-logistic-regression-required-why-not-linear-regression/6620/9) : Violation of assumption of linear relashionship
+- 
 
 
 [FAQ: HOW DO I INTERPRET ODDS RATIOS IN LOGISTIC REGRESSION?](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/)
@@ -48,3 +50,5 @@
 - [QQ plots - StackExchange](https://stats.stackexchange.com/questions/52293/r-qqplot-how-to-see-whether-data-are-normally-distributed)
 - [One tailed vs. two tailed test](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-what-are-the-differences-between-one-tailed-and-two-tailed-tests/)
 - [What method do you think is the best when you are carrying out an ANalysis Of VAriance between groups?](https://www.researchgate.net/post/What_method_do_you_think_is_the_best_when_you_are_carrying_out_an_ANalysis_Of_VAriance_between_groups)
+- [Probability concepts explained: Maximum likelihood estimation
+](https://towardsdatascience.com/probability-concepts-explained-maximum-likelihood-estimation-c7b4342fdbb1)
