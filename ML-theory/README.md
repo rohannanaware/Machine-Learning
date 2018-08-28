@@ -17,8 +17,6 @@
 - To summarize, we got still a linear model but it's modeling the probabilities on a non-linear scale
   <img src = "https://gerardnico.com/_media/data_mining/logit_transform.jpg">
 - [Why is logistic regression required? Why not linear regression?](https://discuss.analyticsvidhya.com/t/why-is-logistic-regression-required-why-not-linear-regression/6620/9) : Violation of assumption of linear relashionship
-- 
-
 
 [FAQ: HOW DO I INTERPRET ODDS RATIOS IN LOGISTIC REGRESSION?](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/)
 - !!! Log likelihood, standard error
@@ -47,6 +45,8 @@
   - [Capturing Campaign Sales Lift—Can Pre-Post Measurements Be Trusted?](http://www.marketingprofs.com/articles/2009/3195/capturing-campaign-sales-liftcan-pre-post-measurements-be-trusted)
     - Minimize impact of seasonality and other data cleaning; run ANOVA to confirm if the increment in sales was significant
   - [Measuring Statistically Significant Lift in Weekly Sales (Using T-Test)](https://stats.stackexchange.com/questions/279035/measuring-statistically-significant-lift-in-weekly-sales-using-t-test)
+- A/B testing
+  - [Data science you need to know! A/B testing](https://towardsdatascience.com/data-science-you-need-to-know-a-b-testing-f2f12aff619a)
 
 - How to identify the control group
 - Incrementality due to marketing vs. YoY natural growth in sales
