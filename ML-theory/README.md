@@ -42,6 +42,20 @@
 - [Understanding Analysis of Variance (ANOVA) and the F-test](http://blog.minitab.com/blog/adventures-in-statistics-2/understanding-analysis-of-variance-anova-and-the-f-test)
 - [The Meaning of an F-Test](https://www.youtube.com/watch?v=g9pGHRs-cxc)
 
+## Sales incrementality
+- Pre-post analysis
+  - [Capturing Campaign Sales Lift—Can Pre-Post Measurements Be Trusted?](http://www.marketingprofs.com/articles/2009/3195/capturing-campaign-sales-liftcan-pre-post-measurements-be-trusted)
+    - Minimize impact of seasonality and other data cleaning; run ANOVA to confirm if the increment in sales was significant
+  - [Measuring Statistically Significant Lift in Weekly Sales (Using T-Test)](https://stats.stackexchange.com/questions/279035/measuring-statistically-significant-lift-in-weekly-sales-using-t-test)
+
+- How to identify the control group
+- Incrementality due to marketing vs. YoY natural growth in sales
+- How to split sales into base and incremental
+- Q. While measuring increment in sales due to marketing campaigns - 
+  - How to conclude that the increment in sales was significant? Pre-post, test-control, YoY increase? 
+  - How to remove the aspects of natural growth in sales, fact that some other marketing campaign might have been active during the same period last year? 
+  - On what basis are the test control splits to be made - how to know that the splits are actually similar?
+
 # Reference
 
 - [ESLR](https://web.stanford.edu/~hastie/Papers/ESLII.pdf)
@@ -50,5 +64,6 @@
 - [QQ plots - StackExchange](https://stats.stackexchange.com/questions/52293/r-qqplot-how-to-see-whether-data-are-normally-distributed)
 - [One tailed vs. two tailed test](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faq-what-are-the-differences-between-one-tailed-and-two-tailed-tests/)
 - [What method do you think is the best when you are carrying out an ANalysis Of VAriance between groups?](https://www.researchgate.net/post/What_method_do_you_think_is_the_best_when_you_are_carrying_out_an_ANalysis_Of_VAriance_between_groups)
+
 - [Probability concepts explained: Maximum likelihood estimation
 ](https://towardsdatascience.com/probability-concepts-explained-maximum-likelihood-estimation-c7b4342fdbb1)
