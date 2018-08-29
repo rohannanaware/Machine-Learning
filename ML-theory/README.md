@@ -67,3 +67,4 @@
 
 - [Probability concepts explained: Maximum likelihood estimation
 ](https://towardsdatascience.com/probability-concepts-explained-maximum-likelihood-estimation-c7b4342fdbb1)
+- [Markov Chain](file:///C:/Users/rohan.nanaware/Downloads/(International%20Series%20in%20Operations%20Research%20&%20Management%20Science)%20Wai-Ki%20Ching,%20Ximin%20Huang,%20Michael%20K.%20Ng,%20Tak%20Kuen%20Siu-Markov%20Chains_%20Models,%20Algorithms%20and%20Applications-Springer%20(2013).pdf)
