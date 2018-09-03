@@ -3,6 +3,7 @@ library(data.table)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
+library(corrplot)
 
 ## load data
 train <- fread('../input/train.csv', header = T, stringsAsFactors = F, na.strings=c("-1","-1.0"))
@@ -54,3 +55,20 @@ p9 <- train %>%
         #geom_density() +   
         geom_density(alpha = 0.5, bw = 0.05) +
         theme(legend.position = "none")## float features
+        
+# plot : Correlation matrix
+p10 <- train %>%
+        select(-starts_with("ps_calc"), -ps_ind_10_bin, -ps_ind_11_bin, -ps_car_10_cat, -id) %>%
+        mutate_at(vars(ends_with("cat")), funs(as.integer)) %>%
+        mutate_at(vars(ends_with("bin")), funs(as.integer)) %>%
+        mutate(target = as.integer(target)) %>%
+        cor(use="complete.obs", method="spearman") %>%
+        corrplot(type = "lower", tl.col = "black", diag = False)
+
+p10 <- train %>%
+        select(-starts_with("ps_calc"), -ps_ind_10_bin, -ps_ind_11_bin, -ps_car_10_cat, -id) %>%
+        mutate_at(vars(ends_with("cat")), funs(as.integer)) %>%
+        mutate_at(vars(ends_with("bin")), funs(as.integer)) %>%
+        mutate(target = as.integer(target)) %>%
+        cor(use="complete.obs", method = "spearman") %>%
+        corrplot(type="lower",tl.col="black",diag=F)
