@@ -33,5 +33,7 @@ Techniques that can be used for converting text to features -
   
 ## Reference
   - [Regular expressions](https://www.analyticsvidhya.com/blog/2015/06/regular-expression-python/)
+  - NLP cheat sheets
+    - [1](https://www.cheatography.com/murenei/cheat-sheets/natural-language-processing-with-python-and-nltk/)
 
     
