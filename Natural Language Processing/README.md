@@ -32,8 +32,12 @@ Techniques that can be used for converting text to features -
 
   
 ## Reference
-  - [Regular expressions](https://www.analyticsvidhya.com/blog/2015/06/regular-expression-python/)
-  - NLP cheat sheets
-    - [1](https://www.cheatography.com/murenei/cheat-sheets/natural-language-processing-with-python-and-nltk/)
-
+- [Regular expressions](https://www.analyticsvidhya.com/blog/2015/06/regular-expression-python/)
+- NLP cheat sheets
+  - [1](https://www.cheatography.com/murenei/cheat-sheets/natural-language-processing-with-python-and-nltk/)
+- [Nltk github repo](https://github.com/nltk)
+- Text mining vs. NLP
+- Stanford
+  - [Text based tutorials](https://nlp.stanford.edu/IR-book/html/htmledition/)
+  - [Video lectures](https://www.youtube.com/watch?v=OQQ-W_63UgQ&list=PL3FW7Lu3i5Jsnh1rnUwq_TcylNr7EkRe6)
     
