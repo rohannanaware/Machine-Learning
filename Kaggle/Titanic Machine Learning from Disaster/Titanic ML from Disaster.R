@@ -11,6 +11,7 @@ library(ggplot2)
 library(stats)
 library(missForest)
 library(caret)
+library(tidyr)
 
 # load data
 train <- fread('../input/train.csv', header = T, stringsAsFactors = F, na.strings = c("", "NA"))
@@ -23,7 +24,6 @@ print('# NAs by colum names #')
 sapply(train, function(x) sum(is.na(x)))
 # Age column has ~177 NAs, EMbarked has 2 and Cabin 687, will need to impute via mean/median or by prediction
 # head(train[is.na(train$Age)])
-
 print(paste('Total rows in test data ', nrow(test)))
 print(paste('Rows in test data with NAs', sum(!complete.cases(test))))
 print('# NAs by colum names #')
@@ -99,8 +99,57 @@ print(rf)
 # Title
 # Surname : Important families
 
+# Categorical features
+
+# Title - correlated with Gender
+train$Title <- gsub('(.*, )|(\\..*)', '', train$Name)
+table(train$Title, train$Sex)# classify the titles into median titles
+train$Title[train$Title %in% c('Capt', 'Col', 'Don','Dr','Jonkheer','Major','Rev','Sir')] <- 'Mr'
+train$Title[train$Title %in% c('Mlle', 'Ms')] <- 'Miss'
+train$Title[train$Title %in% c('Mme','the Countess','Lady')] <- 'Mrs'
+train %>% ggplot(aes(x = Title, fill = Title)) + geom_bar()
+train %>% group_by(Title, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)*100) %>%
+            ggplot(aes(Title, frac_survived, fill = Title)) + geom_col() + labs('Survival rate')
+# Lower survival rate in males - male children had lower survival rate than women
+
+# Passenger class - Pclass
+train %>% ggplot(aes(x = Pclass, fill = Pclass)) + geom_bar()
+train %>% group_by(Pclass, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)) %>%
+            ggplot(aes(x = Pclass, y = frac_survived, fill = Pclass)) + geom_col() + labs('Survival rate')
+# passenger class has an effect on survival rate
+
+# Sex
+train %>% ggplot(aes(Sex, fill = Sex)) + geom_bar()
+train %>% group_by(Sex, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)) %>%
+            ggplot(aes(x = Sex, y = frac_survived, fill = Sex)) + geom_col() + labs('Survival rate')
+# Feamles more likely to survive
+
+# Age
+train %>% ggplot(aes(x = Age, fill = Survived)) + geom_histogram(bins = 10)
+train %>% ggplot(aes(x = Age, fill = Survived)) + 
+            geom_density(alpha = 0.5, bw = 0.01) + 
+            theme(legend.position = "none")
+quantile(train$Age, probs = c(0.05, seq(0, 1, 0.1), 0.95))# need not trim
+# Sibsp
+train %>% ggplot(aes(x = SibSp, fill = SibSp)) + geom_histogram(bins = 10) # trim outliers
+quantile(train$
+### Density plots not working out...
 
 
+
+
+
+            
+            
 
 
 # Submissions
