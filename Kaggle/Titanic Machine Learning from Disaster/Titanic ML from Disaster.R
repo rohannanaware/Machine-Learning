@@ -141,15 +141,14 @@ train %>% ggplot(aes(x = Age, fill = Survived)) +
 quantile(train$Age, probs = c(0.05, seq(0, 1, 0.1), 0.95))# need not trim
 # Sibsp
 train %>% ggplot(aes(x = SibSp, fill = SibSp)) + geom_histogram(bins = 10) # trim outliers
-quantile(train$
+# quantile(train$
 ### Density plots not working out...
+### Learn the binomial significance testing in bivariates
 
 
 
 
 
-            
-            
 
 
 # Submissions
