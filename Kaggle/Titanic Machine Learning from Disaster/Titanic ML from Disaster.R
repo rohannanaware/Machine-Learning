@@ -12,6 +12,7 @@ library(stats)
 library(missForest)
 library(caret)
 library(tidyr)
+library(corrplot)
 
 # load data
 train <- fread('../input/train.csv', header = T, stringsAsFactors = F, na.strings = c("", "NA"))
@@ -73,11 +74,11 @@ test <- cbind(test[colnames(test) %in% c("PassengerId", "Name", "Ticket", "Cabin
                 test_sub$ximp)
 # Train a random forest model
 train$Survived <- as.factor(train$Survived)
-rf <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked,
-                    data = train,
-                    ntree = 100,
-                    mtry = 2)
-print(rf)
+# rf <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked,
+#                     data = train,
+#                     ntree = 100,
+#                     mtry = 2)
+# print(rf)
 
 # Exploratory Data Analysis followed by Feature Engineering
 
@@ -131,36 +132,124 @@ train %>% group_by(Sex, Survived) %>%
             spread(Survived, n) %>%
             mutate(frac_survived = `1`/(`1`+`0`)) %>%
             ggplot(aes(x = Sex, y = frac_survived, fill = Sex)) + geom_col() + labs('Survival rate')
-# Feamles more likely to survive
-
+# Females more likely to survive
 # Age
+train$Survived <- as.factor(train$Survived)
 train %>% ggplot(aes(x = Age, fill = Survived)) + geom_histogram(bins = 10)
 train %>% ggplot(aes(x = Age, fill = Survived)) + 
-            geom_density(alpha = 0.5, bw = 0.01) + 
+            geom_density(alpha = 1, bw = 0.5) + 
             theme(legend.position = "none")
 quantile(train$Age, probs = c(0.05, seq(0, 1, 0.1), 0.95))# need not trim
 # Sibsp
 train %>% ggplot(aes(x = SibSp, fill = SibSp)) + geom_histogram(bins = 10) # trim outliers
-# quantile(train$
-### Density plots not working out...
-### Learn the binomial significance testing in bivariates
+quantile(train$SibSp, probs = seq(0, 1, 0.2))
+### Density plots not working out...fill variable needs to be a factor
+train %>% group_by(SibSp, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)) %>%
+            ggplot(aes(x = SibSp, y = frac_survived, fill = SibSp)) + 
+            geom_col()
+# Parch
+train %>% ggplot(aes(x = Parch, fill = Parch)) + geom_histogram(bins = 10)
+train %>% ggplot(aes(x = Parch, fill = Survived)) + 
+         geom_density(alpha = 0.5, bw = 0.1) + 
+         theme(legend.position = "none")
 
+# Fare
+train %>% ggplot(aes(x = Fare, fill = Fare)) + geom_histogram(bins = 10)
+quantile(train$Fare, probs = seq(0, 1, 0.05))
+train %>% ggplot(aes(x = Fare, fill = Survived)) + 
+            geom_density(alpha = 0.5)
+# quantile(train$Parch, probs = seq(0, 1, 0.2)) # shall I impute? Don't think so but is there a explaination available for not doing so? What are the issues caused due to this?
 
+# Embarked
+train %>% ggplot(aes(x = Embarked, fill = Embarked)) + geom_bar()
+train %>% group_by(Embarked, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)) %>%
+            ggplot(aes(x = Embarked, y = frac_survived, fill = Embarked)) +
+            geom_col()
+train %>% group_by(Embarked) %>%
+            mutate(avg_fare = mean(Fare)) %>%
+            ggplot(aes(x = Embarked, y = avg_fare, fill = Embarked)) + 
+            geom_col()
+# People paying more have higher propensity to survive and people in Southampton paid more, why is their survival lower? Perform muiltivariate EDA
+train$FamS <- train$SibSp + train$Parch
+train %>% ggplot(aes(x = FamS, fill = FamS)) + geom_bar()
+train %>% ggplot(aes(x = FamS, fill = Survived)) + 
+            geom_bar(bins = length(unique(train$FamS)))
 
+# Correlation between variables
+train %>% select(colnames(train)[!(colnames(train) %in% c("PassengerId", "Name", "Ticket", "Cabin", "Sex", "Embarked", "Title","Survived"))]) %>%
+            cor(use = 'complete.obs', method = "spearman") %>%
+            corrplot(type = 'lower', tl.col = "black", diag = F)
 
+# Define train control for k fold cross validation
+train_control = trainControl(method = "cv", number = 5)
+model <- train(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamS, 
+                data = train, 
+                trControl = train_control,
+                # method = "rf",
+                method = "xgbTree")
+print(model)
+# > model$results[model$results$Accuracy == max(model$results$Accuracy),]
+# eta max_depth gamma colsample_bytree min_child_weight subsample nrounds
+# 0.3  2         0     0.8              1                0.75      100    
+#    Accuracy  Kappa     AccuracySD KappaSD   
+# 0.8439753 0.6642773 0.02470748 0.05395401
 
+# Train an XGB classifier
+# Train a rf classifier
 
+train$Title <- as.factor(train$Title)
+rf2 <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + FamS + Title,
+                     data = train,
+                     ntree = 250,
+                     mtry = 7)
+# plot(rf) ntree ~ 250
+
+# rf <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked,
+#                     data = train,
+#                     ntree = 100,
+#                     mtry = 2)
 
 # Submissions
 # 1. predicting that everyone dies
-submission <- data.frame(`PassengerId` = test$PassengerId,
-                        `Survived` = 0)
-write.csv(submission, 'submission.csv', row.names = F) # Score - 0.62679
+# submission <- data.frame(`PassengerId` = test$PassengerId,
+#                         `Survived` = 0)
+# write.csv(submission, 'submission.csv', row.names = F) # Score - 0.62679
 # 2. predicting that only male above age 5 die
-submission <- data.frame(`PassengerId` = test$PassengerId,
-                        `Survived` = ifelse(test$Sex == "male" & test$Age > 5 & !is.na(test$Age), 0, 1))
-write.csv(submission, 'submission.csv', row.names = F) # Score - 0.65550
+# submission <- data.frame(`PassengerId` = test$PassengerId,
+#                         `Survived` = ifelse(test$Sex == "male" & test$Age > 5 & !is.na(test$Age), 0, 1))
+# write.csv(submission, 'submission.csv', row.names = F) # Score - 0.65550
 # 3. randomForest model no feature engineering
+# submission <- data.frame(`PassengerId` = test$PassengerId,
+#                         `Survived` = predict(rf, test))
+# write.csv(submission, 'submission.csv', row.names = F) # Score - 0.75119
+# 4. randomForest model with feature engineering
+test$Title <- gsub('(.*, )|(\\..*)', '', test$Name)
+test$Title[test$Title %in% c('Capt', 'Col', 'Don','Dr','Jonkheer','Major','Rev','Sir')] <- 'Mr'
+test$Title[test$Title %in% c('Mlle', 'Ms')] <- 'Miss'
+test$Title[test$Title %in% c('Mme','the Countess','Lady','Dona')] <- 'Mrs'
+test$Title <- as.factor(test$Title)
+test$FamS <- test$SibSp + test$Parch
 submission <- data.frame(`PassengerId` = test$PassengerId,
-                        `Survived` = predict(rf, test))
+                        `Survived` = predict(rf2, test))
 write.csv(submission, 'submission.csv', row.names = F) # Score - 0.75119
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
