@@ -238,18 +238,3 @@ test$FamS <- test$SibSp + test$Parch
 submission <- data.frame(`PassengerId` = test$PassengerId,
                         `Survived` = predict(rf2, test))
 write.csv(submission, 'submission.csv', row.names = F) # Score - 0.75119
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
