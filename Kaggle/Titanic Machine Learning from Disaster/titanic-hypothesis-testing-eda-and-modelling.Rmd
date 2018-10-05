@@ -1,0 +1,374 @@
+---
+title: 'Titanic : Hypothesis testing, EDA and modelling'
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: true
+    fig_caption: true
+    toc: true
+    fig_width: 7
+    fig_height: 4.5
+    theme: cosmo
+    highlight: tango
+    code_folding: hide
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo=TRUE, error=FALSE)
+```
+
+# Introduction
+This report aims at covering the list of hypotheses that can be tested on the Titanic dataset which will be presented in the form of exploratory data analysis. The results from EDA will be used for enginnering further features which will get fed into modelling phase
+I am a beggginer here, Please let me know comments/suggestions for further improvement
+
+# Preliminary checks {.tabset .tabset-fade .tabset-pills}
+
+## load required libraries
+```{r}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(mice)
+library(VIM)
+library(ggplot2)
+library(stats)
+library(missForest)
+library(caret)
+library(tidyr)
+library(corrplot)
+```
+
+## helper functions
+
+```{r, messege = F}
+
+# Define multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+
+# function to extract binomial confidence levels
+get_binCI <- function(x,n) as.list(setNames(binom.test(x,n)$conf.int, c("lwr", "upr")))
+
+```
+
+
+## load data
+```{r, messege = F}
+
+train <- fread('../input/train.csv', header = T, stringsAsFactors = F, na.strings = c("", "NA"))
+test  <- fread('../input/test.csv', header = T, stringsAsFactors = F, na.strings = c("", "NA"))
+
+```
+## NA count
+
+Train data : age column has ```r sum(is.na(train$Age))```, Embarked has ```r sum(is.na(train$Embarked))``` and Cabin ```r sum(is.na(train$Cabin))```, will need to impute via mean/median or by prediction
+
+Test data : age has ```r sum(is.na(test$Age))``` entries of NAs, Fare has ```r sum(is.na(test$Fare))``` entry of NA and Cabin has ```r sum(is.na(test$Cabin))```.
+
+# NA imputation {.tabset .tabset-fade .tabset-pills}
+
+We will be using the missforest technique for imputation. Refer [NA imputation](https://www.analyticsvidhya.com/blog/2016/03/tutorial-powerful-packages-imputing-missing-values/) link for more details.
+
+## Visualizing the distribution of NAs in data 
+```{r, messege = F}
+missing_values <- aggr(train, col = c('navyblue','yellow'),
+                        labels = names(train), numbers = T,
+                        ylab = c('Missing data', 'Pattern'))
+```
+
+## Age distribution in data before NA imputation
+
+```{r, messege = F}
+p1 <- train %>%
+        filter(!is.na(Age))%>%
+        ggplot(aes(Age, fill = Age)) + geom_histogram(bins = 30) + labs(x = 'Age', y = 'Count of obs.') + ggtitle("Age distribution")
+p1
+```
+
+## Age distribution in data after NA imputation
+
+We apply the missForest technique here which trains a model using the variables without NAs present in them as predictors and Age as dependent variable
+
+```{r, messege = F}
+
+train <- as.data.frame(train)
+train[sapply(train, is.character)] <- lapply(train[sapply(train, is.character)], as.factor)
+train_sub <- train[!(colnames(train) %in% c("PassengerId", "Name", "Ticket", "Cabin"))]
+train_sub <- train_sub %>%
+            missForest(ntree = 500, mtry = 2)
+train <- cbind(train[colnames(train) %in% c("PassengerId", "Name", "Ticket", "Cabin")],
+                train_sub$ximp)            
+
+```
+
+Classification(Embarkment point) and regression(Age) error
+
+```{r, messege = F} 
+print(train_sub$OOBerror)
+```
+
+```{r, messege = F}
+train %>%
+    ggplot(aes(x = Age, fill = Age)) + geom_histogram(bins = 30) + ggtitle("Age distribution")
+```
+
+We see a change in distribution in Age, could be either due to the accuracy of the model or the inherent difference in the observations with vs. without NAs
+
+```{r, messege = F}
+test <- as.data.frame(test)
+test[sapply(test, is.character)] <- lapply(test[sapply(test, is.character)], as.factor)
+test_sub <- test[!(colnames(test) %in% c("PassengerId", "Name", "Ticket", "Cabin"))]
+test_sub <- test_sub %>%
+            missForest()
+# print("The error rate on test data for the missForest model", test_sub$OOBerror)
+test <- cbind(test[colnames(test) %in% c("PassengerId", "Name", "Ticket", "Cabin")],
+                test_sub$ximp)
+```                
+*The error rate while imputing test data is unexpectadly higher, need to investigate why.*
+* One reason could be retraining the missForest model on the test data
+    + The model trained on train data or may be the whole dataset could be used for overall imputation
+    + This is not the right approach considering we do not have the test data available while training the model
+    + Next step is to check if applying missForest on whole data(test+train) actually gives better predictions of survival
+
+# Exploratory Data Analysis {.tabset .tabset-fade .tabset-pills}
+
+Credits - Heads or Tails : [Porto Seguro’s Safe Driver Prediction](https://www.kaggle.com/headsortails/steering-wheel-of-fortune-porto-seguro-eda)
+
+Listing some of the hypothesis(H) and data transformations(D) that can be tested - wip
+* Name/Gender : 
+        + H: Males are less likely to survive than women and children
+        + H: People with same surname will have a similar fate
+* Pclass :
+        + H: People with a lower passenger class are less likely to survive
+* Age : 
+        + H: Young more likely to survive
+* SibSp/Parch : 
+        + H: People with larger family more likely to survive
+* Fare :
+        + H: People travelling on non-premium fare are less likely to survive
+* Embarked :
+        + H: ---
+
+## Categorical features
+
+```{r, messege = F}
+
+train$Title <- gsub('(.*, )|(\\..*)', '', train$Name)
+# table(train$Title, train$Sex)# classify the titles into median titles
+train$Title[train$Title %in% c('Capt', 'Col', 'Don','Dr','Jonkheer','Major','Rev','Sir')] <- 'Mr'
+train$Title[train$Title %in% c('Mlle', 'Ms')] <- 'Miss'
+train$Title[train$Title %in% c('Mme','the Countess','Lady')] <- 'Mrs'
+p1 <- train %>% ggplot(aes(x = Title, fill = Title)) + geom_bar()
+p2 <- train %>% group_by(Title, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)*100,
+                    lwr = get_binCI(`1`,(`1`+`0`))[[1]]*100,
+                    upr = get_binCI(`1`,(`1`+`0`))[[2]]*100) %>%
+            ggplot(aes(Title, frac_survived, fill = Title)) + 
+            geom_col() + 
+            geom_errorbar(aes(ymin = lwr, ymax = upr), width = 0.5, size = 0.7, color = "gray30") + 
+            labs('Survival rate')
+
+p3 <- train %>% ggplot(aes(x = Pclass, fill = Pclass)) + geom_bar()
+p4 <- train %>% group_by(Pclass, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)) %>%
+            ggplot(aes(x = Pclass, y = frac_survived, fill = Pclass)) + geom_col() + labs('Survival rate')
+
+# Sex
+p5 <- train %>% ggplot(aes(Sex, fill = Sex)) + geom_bar()
+p6 <- train %>% group_by(Sex, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)) %>%
+            ggplot(aes(x = Sex, y = frac_survived, fill = Sex)) + geom_col() + labs('Survival rate')
+
+# Embarkment point
+p7 <- train %>% ggplot(aes(x = Embarked, fill = Embarked)) + geom_bar()
+p8 <- train %>% group_by(Embarked, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)) %>%
+            ggplot(aes(x = Embarked, y = frac_survived, fill = Embarked)) +
+            geom_col()
+p9 <- train %>% group_by(Embarked) %>%
+            mutate(avg_fare = mean(Fare)) %>%
+            ggplot(aes(x = Embarked, y = avg_fare, fill = Embarked)) + 
+            geom_col()
+# People paying more have higher propensity to survive and people in Southampton paid more, why is their survival lower? Perform muiltivariate EDA
+
+layout <- matrix(c(1,2,3,4,5,6,7,8, 9), 3, 3, byrow=TRUE)
+
+multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, layout=layout)
+
+```
+
+The title field is a replica of Gender with additional layer of age in it. Will have to check if it makes any value add. People with lower passenger class have a low likelihood of survival. Men have a lower likelihood to survive.
+
+## Numerical features
+
+```{r, messege = F}
+
+# Age
+train$Survived <- as.factor(train$Survived)
+p1 <- train %>% ggplot(aes(x = Age, fill = Survived)) + 
+            geom_density(alpha = 0.5, bw = 1) + 
+            theme(legend.position = "none")
+# Note to self - Density plots require fill variable to be a factor
+
+# Sibsp
+p2 <- train %>% ggplot(aes(x = SibSp, fill = SibSp)) + geom_histogram(bins = 10) # trim outliers
+p3 <- train %>% group_by(SibSp, Survived) %>%
+            count() %>%
+            spread(Survived, n) %>%
+            mutate(frac_survived = `1`/(`1`+`0`)) %>%
+            ggplot(aes(x = SibSp, y = frac_survived, fill = SibSp)) + 
+            geom_col()
+# Parch
+p4 <- train %>% ggplot(aes(x = Parch, fill = Parch)) + geom_bar()
+p5 <- train %>% 
+        mutate(Survived = as.factor(Survived)) %>%
+        ggplot(aes(x = Parch, fill = Survived)) + geom_bar()
+
+# Fare
+p6 <- train %>% ggplot(aes(x = Fare, fill = Survived)) + 
+            geom_histogram(bins = 30)
+
+# Family size
+train$FamS <- train$SibSp + train$Parch
+p7 <- train %>% ggplot(aes(x = FamS, fill = FamS)) + geom_bar()
+p8 <- train %>% ggplot(aes(x = FamS, fill = Survived)) + 
+            geom_bar(bins = length(unique(train$FamS)))
+
+layout <- matrix(c(1,2,3,4,5,6,7,8), 4, 2, byrow=TRUE)
+
+multiplot(p1, p2, p3, p4, p5, p6, p7, p8, layout=layout)
+
+```
+## Correlation plot for numeric variables
+
+```{r, messege = F}
+
+# Correlation between variables
+train %>% select(colnames(train)[!(colnames(train) %in% c("PassengerId", "Name", "Ticket", "Cabin", "Sex", "Embarked", "Title","Survived"))]) %>%
+            cor(use = 'complete.obs', method = "spearman") %>%
+            corrplot(type = 'lower', tl.col = "black", diag = F)
+```
+
+# Model training
+
+## Cross validation
+
+```{r, messege = F}
+
+# Define train control for k fold cross validation
+train_control = trainControl(method = "cv", number = 5)
+model <- train(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + Title + FamS, 
+                data = train, 
+                trControl = train_control,
+                method = "rf"
+                # method = "xgbTree"
+                )
+
+# Train a rf classifier
+train$Title <- as.factor(train$Title)
+rf2 <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked + FamS + Title,
+                     data = train,
+                     ntree = 250,
+                     mtry = 3)
+plot(rf2) # ntree ~ 250
+
+```
+
+# Submissions
+
+```{r, messege = F}
+
+# Submissions
+# 1. predicting that everyone dies
+# submission <- data.frame(`PassengerId` = test$PassengerId,
+#                         `Survived` = 0)
+# write.csv(submission, 'submission.csv', row.names = F) # Score - 0.62679
+# 2. predicting that only male above age 5 die
+# submission <- data.frame(`PassengerId` = test$PassengerId,
+#                         `Survived` = ifelse(test$Sex == "male" & test$Age > 5 & !is.na(test$Age), 0, 1))
+# write.csv(submission, 'submission.csv', row.names = F) # Score - 0.65550
+# 3. randomForest model no feature engineering
+# submission <- data.frame(`PassengerId` = test$PassengerId,
+#                         `Survived` = predict(rf, test))
+# write.csv(submission, 'submission.csv', row.names = F) # Score - 0.75119
+# 4. randomForest model with feature engineering
+test$Title <- gsub('(.*, )|(\\..*)', '', test$Name)
+test$Title[test$Title %in% c('Capt', 'Col', 'Don','Dr','Jonkheer','Major','Rev','Sir')] <- 'Mr'
+test$Title[test$Title %in% c('Mlle', 'Ms')] <- 'Miss'
+test$Title[test$Title %in% c('Mme','the Countess','Lady','Dona')] <- 'Mrs'
+test$Title <- as.factor(test$Title)
+test$FamS <- test$SibSp + test$Parch
+submission <- data.frame(`PassengerId` = test$PassengerId,
+                        `Survived` = predict(rf2, test))
+write.csv(submission, 'submission.csv', row.names = F) # Score - 0.75119
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
