@@ -1,0 +1,129 @@
+{
+  "cells": [
+    {
+      "metadata": {
+        "_cell_guid": "6ed7a81a-520a-4377-a3ad-f042c1466e65",
+        "_uuid": "0fbe949972bd5da2c77a41e744df1b600f3d5ec5",
+        "_execution_state": "idle"
+      },
+      "cell_type": "markdown",
+      "source": "* Author  : Rohan M. Nanaware\n* Date C. : 25th Jun 2017\n* Date M .: 06th Jun 2017\n* Updates: \n    * 28th Jun 2017 - Random forest 1st iteration with NA imputation\n    * 29th Jun 2017 - XGBoost - NA imputation, adjusted eta, depth and iterations. Ran model only on significant factors\n    * 30th Jun 2017 - Feature engineering | List of features added -\n    * 01st Jul 2017 - Random forest | Run on the feature engineered dataset\n        * Understand the reason why XGBoost iteration failed\n    * 04th Jul 2017 - K fold cross validation of XGBoost - Need more feature engineering for model performance improvement\n    * 06th Jul 2017 - Stacking - no improvement in accuracy, need to validate the process\n* Purpose: Check quality of ML knowledge using the Titanic dataset | Leaderbard score on Kaggle"
+    },
+    {
+      "metadata": {
+        "_cell_guid": "e4eec038-9e2e-46f4-802b-e86f3e67db4d",
+        "_uuid": "867a80fe9c831402870d3972760f1c80c5c4d742",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# load required libraries\nlibrary(data.table)\nlibrary(Matrix)\nlibrary(rpart)\nlibrary(xgboost)\nlibrary(readr)\nlibrary(stringr)\nlibrary(caret)\nlibrary(car)\nlibrary(data.table)\nlibrary(randomForest)\nlibrary(tibble)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "ba6ef308-ec68-42f0-9ce0-07d6a988552e",
+        "_uuid": "a9b976eda114e74634d1c11ffdef219f46ee315f",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# import data\ntrain <- fread('../input/train.csv', \n               header = T, \n               stringsAsFactors = F)\ntest  <- fread('../input/test.csv', \n               header = T, \n               stringsAsFactors = F)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "6e6057cb-f872-4fe2-a3bc-f63f281f988a",
+        "_uuid": "f36c39364239b7015b90c57d6c78b67b86dac40c",
+        "_kg_hide-output": true,
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# ADS creation\n\n# collate train and test data\nRMS.TOTAL <- rbind(train[, Survived := NULL], test)\n\n#  NA imputation\n#  Impute Age by prediction\n#  summary(RMS.TOTAL$Age, na.rm = T)\nPREDICT_AGE <- rpart(Age ~ Pclass+Sex+SibSp+Parch+Fare+Embarked,\n                     data = RMS.TOTAL[complete.cases(RMS.TOTAL),],\n                     method = \"anova\")\nRMS.TOTAL$Age[is.na(RMS.TOTAL$Age)] <- predict(PREDICT_AGE, RMS.TOTAL[is.na(RMS.TOTAL$Age),])\n\n#Impute fare by mean\nFARE.EM.CLASS <- RMS.TOTAL[, (MEAN_FARE = median(Fare, na.rm = T)),\n                             by = 'Pclass']\nRMS.TOTAL$Fare[is.na(RMS.TOTAL$Fare)] = FARE.EM.CLASS$V1[FARE.EM.CLASS$Pclass == RMS.TOTAL$Pclass[is.na(RMS.TOTAL$Fare)]]\nRMS.TOTAL$Embarked[RMS.TOTAL$Embarked == \"\" ] <- \"S\"",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "7895da0b-7978-4021-b4c9-dffa8ea4ecd8",
+        "_uuid": "92460ce50b2e55d1222cc6e93073878391db109e",
+        "_kg_hide-output": true,
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# Feature engineering - from Megan Risdals code\n\n#Extract title - \n  RMS.TOTAL$Title <- gsub('(.*, )|(\\\\..*)', '', RMS.TOTAL$Name)\n  table(RMS.TOTAL$Title, RMS.TOTAL$Sex)\n  #combine titles with low cell counts\n  RARE.TITLE <- c('Dona', 'Lady', 'the Countess', 'Capt',\n                  'Col','Don', 'Dr', 'Major', 'Rev', 'Sir',\n                  'Jonkheer')\n  RMS.TOTAL$Title[RMS.TOTAL$Title == 'Mlle'] = 'Miss'\n  RMS.TOTAL$Title[RMS.TOTAL$Title == 'Ms']   = 'Miss'\n  RMS.TOTAL$Title[RMS.TOTAL$Title == 'Mme']  = 'Mrs'\n  RMS.TOTAL$Title[RMS.TOTAL$Title %in% RARE.TITLE] = 'Rare'\n  table(RMS.TOTAL$Title, RMS.TOTAL$Sex)\n  #Add ethnicity details using surname?\n  RMS.TOTAL$Surname <- sapply(as.character(RMS.TOTAL$Name), FUN = \n                                function(x) {strsplit(x, '[,.]')}[[1]][1])\n  RMS.TOTAL$F.SIZE  <- RMS.TOTAL$SibSp + RMS.TOTAL$Parch + 1\n  RMS.TOTAL$Family  <- paste(RMS.TOTAL$Surname, RMS.TOTAL$F.SIZE, sep = \"_\")\n  RMS.TOTAL$F.SIZE.B[RMS.TOTAL$F.SIZE == 1] <- 'Singleton'\n  RMS.TOTAL$F.SIZE.B[RMS.TOTAL$F.SIZE < 5 & RMS.TOTAL$F.SIZE > 1] <- 'Small'\n  RMS.TOTAL$F.SIZE.B[RMS.TOTAL$F.SIZE >= 5] <- 'Large'\n  #Create a deck variable\n  RMS.TOTAL$DECK <- sapply(RMS.TOTAL$Cabin, FUN = function(x) {strsplit(x, NULL)}[[1]][1])\n  #RMS.TOTAL$DECK <- NULL\n  RMS.TOTAL$CHILD[RMS.TOTAL$Age < 18] <- 'Child'\n  RMS.TOTAL$CHILD[RMS.TOTAL$Age >= 18] <- 'Adult'\n  RMS.TOTAL$MOTHER <- 'Not Mother' \n  RMS.TOTAL$MOTHER[RMS.TOTAL$Sex == 'female' & RMS.TOTAL$Age > 18 & \n                     RMS.TOTAL$Parch > 0 & RMS.TOTAL$Title != 'Miss'] <- 'Mother'\n  # colnames(RMS.TOTAL)\n  RMS.TOTAL$Surname <- NULL\n  #RMS.TOTAL$F.SIZE  <- NULL\n  RMS.TOTAL$Family  <- NULL\n  RMS.TOTAL$DECK    <- NULL",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "ccb96768-4cca-4ea6-98bb-044b3bb78b46",
+        "_uuid": "245161dee25f546ce9f8cc93de6d80c9af786258",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# Split up train and test data\ntrain <- fread('../input/train.csv', \n               header = T, \n               stringsAsFactors = F)\n  RMS.TRAIN <- as.data.frame(cbind(RMS.TOTAL[1:nrow(train),], train$Survived))\n  RMS.TEST  <- as.data.frame(RMS.TOTAL[-(1:nrow(train)),])\n  colnames(RMS.TRAIN)[colnames(RMS.TRAIN) == \"V2\"] <- 'Survived'\n",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_uuid": "7cbed01aa6b495efc595454cf42216c1ebd73fb0",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# Data massaging\n    REDUCE_COLS <- c(\"PassengerId\",\"Name\",\"Ticket\",\"Cabin\")\n    RMS.TRAIN <- data.table(RMS.TRAIN)\n    RMS.TRAIN <- RMS.TRAIN[, !REDUCE_COLS, with = FALSE] \n    FEATURES_OHE<- c(\"Pclass\",\n                     \"Sex\",\n                     \"Embarked\",\n                     \"Title\",\n                     \"F.SIZE.B\",\n                     \"CHILD\",\n                     \"MOTHER\"\n    )\n    DUMMIES     <- dummyVars(~ Pclass+\n                               Sex+\n                               Embarked+\n                               Title+\n                               F.SIZE.B+\n                               CHILD+\n                               MOTHER,\n                             data = RMS.TRAIN)\n    RMS.TRAIN.OHE <- as.data.frame(predict(DUMMIES, newdata = RMS.TRAIN))\n    RMS.TRAIN     <- data.frame(RMS.TRAIN)\n    RMS.TRAIN.ENC <- cbind(RMS.TRAIN[,-c(which(colnames(RMS.TRAIN) %in% FEATURES_OHE))], RMS.TRAIN.OHE)\n    RMS.TRAIN.ENC[] <- lapply(RMS.TRAIN.ENC, as.numeric)\n    RMS.TRAIN.ENC.F <- RMS.TRAIN.ENC[,which(colnames(RMS.TRAIN.ENC) != \"Survived\")]",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "43dda27c-3b72-409c-8e77-19d1949dd15e",
+        "_uuid": "785f569d6dc109391a138bcfe6c0a686d7b8fd6d",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "k = 10\n    RMS.TRAIN.ENC.F$ID <- sample(1:k, nrow(RMS.TRAIN), replace = T)\n    RMS.TRAIN.ENC$ID   <- RMS.TRAIN.ENC.F$ID\n    error        <- numeric()\n    for (i in 1:k) {\n      TRAIN <- RMS.TRAIN.ENC.F[RMS.TRAIN.ENC.F$ID != i,][,!(colnames(RMS.TRAIN.ENC.F) == \"ID\")]\n      TEST  <- RMS.TRAIN.ENC.F[RMS.TRAIN.ENC.F$ID == i,][,!(colnames(RMS.TRAIN.ENC.F) == \"ID\")]\n      TRAIN.DEP <- RMS.TRAIN.ENC[RMS.TRAIN.ENC$ID != i,][,!(colnames(RMS.TRAIN.ENC) == \"ID\")]\n      TEST.DEP  <- RMS.TRAIN.ENC[RMS.TRAIN.ENC$ID == i,][,!(colnames(RMS.TRAIN.ENC) == \"ID\")]\n      set.seed(1007)\n      XGB_1 <- xgboost(data = data.matrix(TRAIN),\n                       label = TRAIN.DEP$Survived,\n                       eta = 0.01,\n                       max_depth = 3,\n                       nround = 2000,\n                       seed = 1007,\n                       objective = \"binary:logistic\",\n                       nthread = 3,\n                       verbose = F\n      )\n      PREDICTION.TEST <- predict(XGB_1, data.matrix(TEST))\n      PREDICTION.TEST <- data.frame(Survived = as.numeric(PREDICTION.TEST > 0.5))\n      #confusionMatrix(PREDICTION$PREDICTION, TEST.DEP$Survived)\n      table_ = as.matrix(table(PREDICTION.TEST$Survived, TEST.DEP$Survived))#93.9%\n      print((table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1]))\n      error[i] = 1 - (table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1])\n    }\n    \n    bias <- mean(error)\n    variance <- sd(error)\n    print(paste(\"Bias = \", bias, \" & Variance = \", variance))",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "58e4e4e3-953b-4d04-a833-7587925b995b",
+        "_uuid": "a06121f6815d564b0eaceb9fc9bc16f83db18cb1",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "      TRAIN <- RMS.TRAIN.ENC.F[,!(colnames(RMS.TRAIN.ENC.F) == \"ID\")]\n      TEST  <- RMS.TRAIN.ENC.F[,!(colnames(RMS.TRAIN.ENC.F) == \"ID\")]\n      TRAIN.DEP <- RMS.TRAIN.ENC[,!(colnames(RMS.TRAIN.ENC) == \"ID\")]\n      TEST.DEP  <- RMS.TRAIN.ENC[,!(colnames(RMS.TRAIN.ENC) == \"ID\")]\n      set.seed(1007)\n      XGB_1 <- xgboost(data = data.matrix(TRAIN),\n                       label = TRAIN.DEP$Survived,\n                       eta = 0.01,\n                       max_depth = 3,\n                       nround = 2000,\n                       seed = 1007,\n                       objective = \"binary:logistic\",\n                       nthread = 3,\n                       verbose = F\n      )\n      PREDICTION.TEST <- predict(XGB_1, data.matrix(TEST))\n      PREDICTION.TEST <- data.frame(Survived = as.numeric(PREDICTION.TEST > 0.5))\n      #confusionMatrix(PREDICTION$PREDICTION, TEST.DEP$Survived)\n      table_ = as.matrix(table(PREDICTION.TEST$Survived, TEST.DEP$Survived))#93.9%\n      print((table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1]))\n      error[i] = 1 - (table_[1,1]+table_[2,2])/(table_[1,1]+table_[2,2]+table_[1,2]+table_[2,1])",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_uuid": "603a364201065e20dddad16ed07ee2dfb95782c3",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# create submission file\n  RMS.TEST <- data.table(RMS.TEST)\n  RMS.TEST <- RMS.TEST[, !REDUCE_COLS, with = FALSE] \n  DUMMIES     <- dummyVars(~ Pclass+\n                             Sex+\n                             Embarked+\n                             Title+\n                             F.SIZE.B+\n                             CHILD+\n                             MOTHER,\n                           data = RMS.TEST)\n  RMS.TEST.OHE <- as.data.frame(predict(DUMMIES, newdata = RMS.TEST))\n  RMS.TEST     <- data.frame(RMS.TEST)\n  RMS.TEST.ENC <- cbind(RMS.TEST[,-c(which(colnames(RMS.TEST) %in% FEATURES_OHE))], RMS.TEST.OHE)\n  RMS.TEST.ENC[] <- lapply(RMS.TEST.ENC, as.numeric)\n  RMS.TEST.ENC.F <- RMS.TEST.ENC \n  PREDICTION <- predict(XGB_1, data.matrix(RMS.TEST.ENC.F))\n  PREDICTION <- data.frame(PREDICTION = as.numeric(PREDICTION > 0.5))\n  RESULT     <- cbind(PassengerId = as.data.frame(RMS.TOTAL[-(1:nrow(train)),])$PassengerId, Survived = PREDICTION$PREDICTION)\n  write.csv(RESULT, \"170630_RMS_ITER3.csv\", row.names = F)",
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "R",
+      "language": "R",
+      "name": "ir"
+    },
+    "language_info": {
+      "mimetype": "text/x-r-source",
+      "name": "R",
+      "pygments_lexer": "r",
+      "version": "3.4.2",
+      "file_extension": ".r",
+      "codemirror_mode": "r"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 1
+}
