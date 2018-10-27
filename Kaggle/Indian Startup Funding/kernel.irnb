@@ -1,0 +1,127 @@
+{
+  "cells": [
+    {
+      "metadata": {
+        "_cell_guid": "ae746cbc-5f1f-4c01-a3e2-c55e950be72e",
+        "_uuid": "4269db0a4d807870a0fa0475a0f6d2406d029720"
+      },
+      "cell_type": "markdown",
+      "source": "<h1>India Startup Funding - EDA and investment prediction</h1>\n\n* Author : Rohan M. Nanaware\n* Date C.: 23rd Feb 2018\n* Date M.: 23rd Feb 2018\n* List of updates - \n    * skajdka"
+    },
+    {
+      "metadata": {
+        "_cell_guid": "c2e8f4f7-f41a-4e75-9ce3-3e227288e236",
+        "_uuid": "31b5499bc9789dd9859dad719273fda28840700e"
+      },
+      "cell_type": "markdown",
+      "source": "<h2>List of hypotheses/questions to be tested(wip)</h2>\n\n* Overall sentiment in the country\n    * Surge in startups opened in India has also increased the number of investers\n    * How much has the overall startup maket grown?\n    * Which sector has attracted the maximum investment? How has this trended over time?    \n* Increase in the diversity of startups\n    * An overall increase in the sectors wherein startups operate have diversified the options avaialble for an invester\n    * Startups addressing niche markets will attract better investment\n    * A factor of adoption to the new startup ideas needs to be explored. Investors may be skeptical in risking to spend their money in relatively new ideas than ones that are concretely established\n* Attributes of the startup\n    * The horizontal/vertical of the startup\n        * What are some sectors that have been attracting better investment? How has this changed over time?    \n    * The qualification of the person/team initiating the startup\n    * The presentation/pitch made by the startup for investment\n    * Statup performance in the period it has been active    \n* Region attributes\n    * Where is the startup based?\n    * Is it closer to the leading startup hubs?\n    * How easy/difficult is it to procure employees\n* Investor behaviour\n    * Who are the top investors in startup market? Overall and category specific\n    * How has the amount invested by top investors in a startup changed over time? Overall and category specific\n    * Do certain investors prefer in put their money in fixed category of startups? Why?\n* *More to be added    *"
+    },
+    {
+      "metadata": {
+        "_cell_guid": "d81d4dc2-abe7-4e4f-b060-08984e234e1b",
+        "_uuid": "08831b75978e4fc90065b48c5357f19afd6cd39c"
+      },
+      "cell_type": "markdown",
+      "source": "<h2>Predicting the investment</h2>\n\n* As an investor what are the key metrics that I should be looking at before investing in a startup?\n* What is the right amount that should be invested in a startup?\n* ..."
+    },
+    {
+      "metadata": {
+        "_cell_guid": "9d79bb1f-3a4c-4ac2-a74a-647bff186ae4",
+        "_uuid": "51f362ca5edc5dfd3a3d67723d1ece7fcf758fd6",
+        "_execution_state": "idle"
+      },
+      "cell_type": "markdown",
+      "source": "<h2>Reference</h2>"
+    },
+    {
+      "metadata": {
+        "_cell_guid": "ffe1e3aa-c408-4dd9-9f7a-122306b196a5",
+        "_uuid": "cb6f2ea5e4bbf16f414cf7593cd8deef24fce8fc",
+        "_kg_hide-output": true,
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# import required libraries and helper functions\nlibrary(data.table)\nlibrary(tibble)\nlibrary(stringr)\nlibrary(ggplot2)\nlibrary(dplyr)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "b12fa7d3-1d57-415a-87e6-f7e59bf05159",
+        "_uuid": "510c1e2fa1a7c52702f22967163584b6aeb83a28",
+        "_kg_hide-output": true,
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# import data\n#list.files(\"../input\")\nstartup_funding <- as.tibble(fread(\"../input/startup_funding.csv\", \n                                   header = T, \n                                  stringsAsFactors = F,\n                                  na.strings = c(NA, \"\", \"NA\")))\nhead(startup_funding)\nsummary(startup_funding)\n#str(startup_funding)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_uuid": "6ae0f004ff6a069f263e8d014ac3a87425cb2875"
+      },
+      "cell_type": "markdown",
+      "source": "We have details on the Startups and respective investors alongwith how much investment the startup received"
+    },
+    {
+      "metadata": {
+        "_cell_guid": "62ed695c-51a1-4e86-b14b-057854b38123",
+        "_uuid": "ff1ab8dbeb6fa212aeca9167f418f9f43f4600e5",
+        "_kg_hide-output": true,
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "# data transformations\nstartup_funding$Date <- as.Date(startup_funding$Date,\n                               format = '%d/%m/%Y')\nstartup_funding$AmountInUSD <- as.numeric(gsub(\",\", \"\", startup_funding$AmountInUSD))\n\n# extract year, month and week\nstartup_funding$year <- year(startup_funding$Date)\nstartup_funding$month<- month(startup_funding$Date)\nstartup_funding$week<- week(startup_funding$Date)\n\nsapply(startup_funding, function(x) sum(is.na(x)))\nsapply(startup_funding, function(x) length(unique(x)))\nsapply(startup_funding, function(x) min(x, na.rm = T))\nsapply(startup_funding, function(x) max(x, na.rm = T))",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "83fc53dc-a2c3-4820-9185-010c7bdce631",
+        "_uuid": "3fc4adc8dbd583c6c9d0611995b77eddf380fd6c",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "head(startup_funding)",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "metadata": {
+        "_cell_guid": "bab49230-d178-46ac-9cc9-891fbf801374",
+        "_uuid": "917c4941930592c1575299bbf5feb3b717984775"
+      },
+      "cell_type": "markdown",
+      "source": "<h3>How has the Indian startup environment performed so far?</h3>"
+    },
+    {
+      "metadata": {
+        "_cell_guid": "90841402-1b75-4de0-b94f-c60f79c62117",
+        "_uuid": "8f9839262ef98b5fd9e545a45bd66d4f3979f3f4",
+        "trusted": false
+      },
+      "cell_type": "code",
+      "source": "p1 <- startup_funding  %>%\n    group_by(year) %>%\n    summarise(AmountInUSD = sum(AmountInUSD, na.rm = T))\np1",
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "R",
+      "language": "R",
+      "name": "ir"
+    },
+    "language_info": {
+      "mimetype": "text/x-r-source",
+      "name": "R",
+      "pygments_lexer": "r",
+      "version": "3.4.2",
+      "file_extension": ".r",
+      "codemirror_mode": "r"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 1
+}
