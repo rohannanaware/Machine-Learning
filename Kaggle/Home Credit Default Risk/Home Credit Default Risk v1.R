@@ -100,6 +100,15 @@ if (sum(na_count) > 0) {
 
 application_train_character <- cbind(application_train_character, "TARGET" = application_train$TARGET)
 
+
+
+
+
+#########################################################
+# wip - eda automation
+#########################################################
+
+{
 for (column in colnames(application_train_character)[1:ncol(application_train_character) - 1]) {
   
   assign(paste0("plot_", "char_", column), eval(parse(text = paste("application_train_character %>%
@@ -130,3 +139,4 @@ for (plot in unlist(ls()[as.numeric(lapply(ls(), function(x) grep("plot_", x))) 
 }
 multiplt_text <- paste0(substr(multiplt_text, 1, nchar(multiplt_text) - 1), ", cols = 4)")
 eval(parse(text = multiplt_text))
+}
