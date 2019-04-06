@@ -70,3 +70,5 @@
 - [Markov Chain](file:///C:/Users/rohan.nanaware/Downloads/(International%20Series%20in%20Operations%20Research%20&%20Management%20Science)%20Wai-Ki%20Ching,%20Ximin%20Huang,%20Michael%20K.%20Ng,%20Tak%20Kuen%20Siu-Markov%20Chains_%20Models,%20Algorithms%20and%20Applications-Springer%20(2013).pdf)
 - [Why to perform variable transformation?](https://stats.stackexchange.com/questions/4831/regression-transforming-variables)
 - [Why do we convert skewed data into a normal distribution?](https://datascience.stackexchange.com/questions/20237/why-do-we-convert-skewed-data-into-a-normal-distribution)
+- [Statistical decision theory](https://www.youtube.com/watch?v=3BBk6XZR-bk)
+- [Expected value - wiki](https://en.wikipedia.org/wiki/Expected_value)
