@@ -9,6 +9,7 @@
 - [Cosine similarity](#cosine-similarity)
 - [K-Prototype in Clustering](#k-prototype-in-clustering)
 - [K-means clustering](#k-means-clustering)
+- [Hierarchial clustering](https://www.datacamp.com/community/tutorials/hierarchical-clustering-R)
 
 ## Cosine similarity
 
