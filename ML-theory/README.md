@@ -72,3 +72,4 @@
 - [Why do we convert skewed data into a normal distribution?](https://datascience.stackexchange.com/questions/20237/why-do-we-convert-skewed-data-into-a-normal-distribution)
 - [Statistical decision theory](https://www.youtube.com/watch?v=3BBk6XZR-bk)
 - [Expected value - wiki](https://en.wikipedia.org/wiki/Expected_value)
+- [Modified z score for outlier identification and treatment](https://www.ibm.com/support/knowledgecenter/en/SSEP7J_11.1.0/com.ibm.swg.ba.cognos.ug_ca_dshb.doc/modified_z.html)
