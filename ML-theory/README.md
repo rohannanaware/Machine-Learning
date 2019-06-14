@@ -23,7 +23,7 @@
 
 ## Decision trees
 
-- [A Practical Guide to Tree Based Learning Algorithms](https://sadanand-singh.github.io/posts/treebasedmodels/#disqus_thread)
+- [A Practical Guide to Tree Based Learning Algorithms](https://datasciencevision.com/tree-based-models/)
 - [A Complete Tutorial on Tree Based Modeling from Scratch (in R & Python)](https://www.analyticsvidhya.com/blog/2016/04/complete-tutorial-tree-based-modeling-scratch-in-python/)
 - [Tree-based Methods](https://lagunita.stanford.edu/c4x/HumanitiesScience/StatLearning/asset/trees.pdf)
 
