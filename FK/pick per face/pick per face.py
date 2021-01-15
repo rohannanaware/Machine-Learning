@@ -12,13 +12,14 @@ import numpy as np
 # set working directory
 ################################################
 
-os.chdir('C:/Users/rohan.nanaware/Documents/01 Flipkart/FC analytics/37 pick per face')
+os.chdir('C:/Users/rohan.nanaware/Documents/37 pick per face')
 
 ################################################
 # import data
 ################################################
 
-input_data = pd.read_csv('ulub_bts_bbd_reservations.csv')
+# input_data = pd.read_csv('ulub_bts_bbd_reservations.csv')
+input_data = pd.read_csv('ulub_bts_bbd_reservations_oct19-12pm-4pm.csv')
 
 ################################################
 # data checks/cleaning
@@ -35,41 +36,43 @@ input_data.dropna(inplace = True)
 
 # invetory data creation | rerun entire below block for reset
 # filter data for a given reservation date
-input_data_inv = input_data[input_data['reservation_created_date_key'] == 20201016]
+#input_data_inv = input_data[input_data['reservation_created_date_key'] == 20201016]
+input_data_inv = input_data
 input_data_inv.reset_index(inplace = True, drop = True)
+
 # fill bins with a days reservations : aggregate at day bin x wid level
 inventory_binwid_lvl = input_data_inv.groupby(
-        ['reservation_created_date_key','storage_location_label','sequence_id', 'wid'], as_index = False
+        ['storage_location_label','sequence_id', 'wid'], as_index = False
         ).agg({"fulfill_reference_id":"count"})
-inventory_binwid_lvl.columns = ['reservation_created_date_key', 'storage_location_label', 'sequence_id',
-       'wid', 'qoh']
+inventory_binwid_lvl.columns = ['storage_location_label', 'sequence_id', 'wid', 'qoh']
 inventory_bin_lvl = input_data_inv.groupby(
-        ['reservation_created_date_key','storage_location_label'], as_index = False
+        ['storage_location_label'], as_index = False
         ).agg({"fulfill_reference_id":"count",
                 "wid":"nunique"})
 del input_data_inv
-inventory_bin_lvl.columns = ['reservation_created_date_key', 'storage_location_label',
-       'qoh_bin', 'wid_count'] 
+inventory_bin_lvl.columns = ['storage_location_label','qoh_bin', 'wid_count'] 
 inventory_binwid_lvl = pd.merge(inventory_binwid_lvl,
                                 inventory_bin_lvl,
                                 how='left',
-                                on=['reservation_created_date_key','storage_location_label'])
+                                on=['storage_location_label'])
 inventory_binwid_lvl['atp'] = inventory_binwid_lvl['qoh']
 inventory_binwid_lvl['bin_reservations'] = 0
 #sort by wids to pick the bin with max wids
 inventory_binwid_lvl.sort_values(by='wid_count',ascending=False,inplace = True)
 # simulation input data | filter data for a given reservation date and a given cutoff | later these columns would be looped upon
-input_data_sim = input_data[(input_data['reservation_created_date_key'] == 20201016) &
-                             (input_data['dispatch_by_cutoff'] == '2020-10-16 18:30:00')]
-input_data_sim.sort_values(by='order_item_approved_timestamp',ascending = True, inplace = True)
+#input_data_sim = input_data[(input_data['reservation_created_date_key'] == 20201016) &
+#                             (input_data['dispatch_by_cutoff'] == '2020-10-16 18:30:00')]
+input_data_sim = input_data
+input_data_sim.sort_values(by='reservation_created_timestamp',ascending = True, inplace = True)
 input_data_sim.reset_index(inplace = True, drop = True)
 input_data_sim['bin_assigned'] = 0
 
 # simulation loop
 for index, row in input_data_sim.iterrows():
     
-    if index % 1000 == 0:
+    if index % 10000 == 0:
         print(index)
+        print(dt.now())
     # filter inventory data for the wid
     bin_label = inventory_binwid_lvl.loc[(inventory_binwid_lvl['wid'] == row['wid']) &
                                 (inventory_binwid_lvl['atp'] > 0),
